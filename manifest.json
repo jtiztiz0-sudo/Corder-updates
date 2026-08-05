@@ -1,6 +1,6 @@
 {
-  "version": 10,
-  "published": "2026-08-05 16:45",
+  "version": 11,
+  "published": "2026-08-05 16:48",
   "files": {
     "app.py": {
       "sha256": "69bd07d1684e655973ae9451b8b45026b9c29ae3de6b7c7f619cc196b7cd9b75",
@@ -19,8 +19,8 @@
       "size": 8362
     },
     "updater.py": {
-      "sha256": "2cafd4b6061247a6d4f2aefd854c3884ee4b42f7855b2cddda428494dcb5be80",
-      "size": 7049
+      "sha256": "5a8294f87b86582da01feaf876d9f0286d26607a00b160115f21f03b17acafb1",
+      "size": 7724
     },
     "OPEN-THE-APP.bat": {
       "sha256": "e29043cdf472fdb66bdde75b19d7a0f21125afb6ced277dc8b14ccfcb0e33e61",

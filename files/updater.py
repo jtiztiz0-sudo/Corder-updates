@@ -154,6 +154,20 @@ def apply(manifest) -> bool:
 
         with open(VERSION_FILE, "w", encoding="utf-8") as fh:
             fh.write(str(int(manifest["version"])))
+        # A file that used to ship but no longer does is never overwritten by
+        # an update -- it just sits there. For the launcher that matters: two
+        # of them side by side and the customer has to guess which to open.
+        # Only names on this explicit list are ever removed.
+        for stale in ("run.bat", "OPEN THE APP.bat"):
+            if stale in manifest["files"]:
+                continue
+            gone = os.path.join(HERE, stale)
+            if os.path.isfile(gone):
+                try:
+                    os.remove(gone)
+                    _log("removed the old launcher %s" % stale)
+                except OSError:
+                    pass
         _log("updated to version %s (%d files)" % (manifest["version"], len(staged)))
         return True
     except (urllib.error.URLError, OSError, ValueError) as exc:
