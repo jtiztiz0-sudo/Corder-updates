@@ -39,7 +39,7 @@ import urllib.request
 import urllib.error
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-MANIFEST_URL = ""          # blank = updates switched off
+MANIFEST_URL = "https://raw.githubusercontent.com/jtiztiz0-sudo/Corder-updates/main/manifest.json"          # blank = updates switched off
 VERSION_FILE = os.path.join(HERE, "version.txt")
 LOG_FILE = os.path.join(HERE, "update.log")
 
@@ -107,7 +107,7 @@ def check():
 
 
 def _safe_relpath(rel: str) -> str | None:
-    """Reject anything that would write outside this folder (../, C:\..., /etc)."""
+    r"""Reject anything that would write outside this folder (../, C:\..., /etc)."""
     rel = rel.replace("\\", "/")
     if rel.startswith("/") or ".." in rel.split("/") or ":" in rel:
         return None
