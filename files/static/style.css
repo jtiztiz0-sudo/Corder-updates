@@ -117,6 +117,15 @@ button:hover{filter:brightness(1.08)}
 .hist-btn.on{color:var(--ink);border-color:var(--blue)}
 .hist-n{font-family:ui-monospace,Menlo,Consolas,monospace;background:var(--surface-2);
   border-radius:20px;padding:0 6px}
+/* Which copy of this app is running. Bottom-right, 7px, and on a CUSTOMER's
+   machine it is drawn in the page background colour -- present in the markup,
+   invisible on screen, so nothing ever prompts a "what's that?". The other two
+   are tinted because they are only ever seen by you. */
+.copy-dot{position:fixed;right:7px;bottom:7px;width:7px;height:7px;
+  border-radius:50%;pointer-events:none;z-index:99}
+.copy-customer{background:var(--bg)}
+.copy-master{background:#e0a03a;box-shadow:0 0 0 1px rgba(224,160,58,.35)}
+.copy-test{background:#8b5cf6;box-shadow:0 0 0 1px rgba(139,92,246,.35)}
 .blurb{max-width:66ch;margin:-4px 0 18px;color:var(--muted);font-size:13.5px;line-height:1.6}
 .blurb p{margin:0 0 8px}
 .blurb-lead{font-weight:700;color:var(--ink);margin:0 0 4px}

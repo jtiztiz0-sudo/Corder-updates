@@ -52,9 +52,33 @@ def _shortdate(value):
     return "%d %s %d" % (d.day, d.strftime("%b"), d.year)
 
 
+def _which_copy() -> str:
+    """Which copy of this app is running -- from its own folder.
+
+    "customer"  a real install (theirs, or a delivered one)
+    "master"    the copy CorderHome keeps and reads the wishlist from
+    "test"      the throwaway sandbox used to try a fix before sending it
+
+    Shown as a small dot in the corner. Deliberately quiet: on a customer's
+    machine it is the same colour as the background and reads as nothing at
+    all, so it never invites a question.
+    """
+    here = os.path.dirname(os.path.abspath(__file__)).lower()
+    parts = [p for p in here.split(os.sep) if p]
+    if "sandbox" in parts:
+        return "test"
+    if "generated" in parts:
+        return "master"
+    return "customer"
+
+
+COPY_KIND = _which_copy()
+
+
 @app.context_processor
 def _inject():
-    return {"MODULES": modules.MODULES, "BUSINESS": modules.BUSINESS}
+    return {"MODULES": modules.MODULES, "BUSINESS": modules.BUSINESS,
+            "COPY_KIND": COPY_KIND}
 
 
 def _module_or_404(key: str) -> dict:

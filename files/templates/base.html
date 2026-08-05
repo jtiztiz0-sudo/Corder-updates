@@ -82,5 +82,7 @@
     };
   </script>
   {% block scripts %}{% endblock %}
+<span class="copy-dot copy-{{ COPY_KIND }}" aria-hidden="true"
+      title="{{ {'customer':'This is the copy a customer runs','master':'Your master copy - CorderHome reads the wishlist from this one','test':'Test copy - nothing here reaches the customer'}[COPY_KIND] }}"></span>
 </body>
 </html>
