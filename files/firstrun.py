@@ -92,13 +92,13 @@ foreach ($dir in $targets) {
 
 
 def make_shortcuts(home: str, app_name: str) -> list:
-    """Desktop + Start menu. Points at the app's own pythonw, not run.bat --
+    """Desktop + Start menu. Points at the app's own pythonw, not the .bat --
     a .bat shortcut flashes a black console box open every single time."""
     exe = os.path.join(home, "runtime", "pythonw.exe")
     if os.path.isfile(exe):
         args = '"%s"' % os.path.join(home, "desktop.py")
     else:
-        exe, args = os.path.join(home, "run.bat"), ""
+        exe, args = os.path.join(home, "OPEN THE APP.bat"), ""
     icon = os.path.join(home, "static", "icon.ico")
     safe = re.sub(r'[\\/:*?"<>|]', "", app_name or "App").strip() or "App"
 

@@ -32,6 +32,26 @@ app.config["TEMPLATES_AUTO_RELOAD"] = True
 db.init_db()
 
 
+@app.template_filter("shortdate")
+def _shortdate(value):
+    """2026-08-05 16:04 -> "5 Aug". A different year keeps it: "5 Aug 2025".
+
+    Two reasons this isn't the raw date. It reads like a person wrote it rather
+    than a database, and it has no hyphens -- an ISO date breaks across two
+    lines at its hyphens when a column gets tight, which looked broken.
+    """
+    text = str(value or "").strip()
+    if not text:
+        return ""
+    try:
+        d = datetime.strptime(text[:10], "%Y-%m-%d")
+    except ValueError:
+        return text[:10]
+    if d.year == datetime.now().year:
+        return "%d %s" % (d.day, d.strftime("%b"))
+    return "%d %s %d" % (d.day, d.strftime("%b"), d.year)
+
+
 @app.context_processor
 def _inject():
     return {"MODULES": modules.MODULES, "BUSINESS": modules.BUSINESS}

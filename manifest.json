@@ -1,28 +1,28 @@
 {
-  "version": 4,
-  "published": "2026-08-05 15:13",
+  "version": 5,
+  "published": "2026-08-05 16:06",
   "files": {
     "app.py": {
-      "sha256": "1fe39347cb80d98a75a8d2058dea9f7840b128caadcd9dc2c18e4ecd85e621da",
-      "size": 7637
+      "sha256": "884c9d69682f62a65e0bb22828b3c229aeb5cea2d425602fce2a0d61450ec03a",
+      "size": 8338
     },
     "db.py": {
       "sha256": "7a86c48e4ea47e5cf11cb9b4da62f028169b141d32e97d93ebc3e7c2da066ed6",
       "size": 3179
     },
     "desktop.py": {
-      "sha256": "b899282610026eb4ce953cf4706697155dbd983678eff5060ae2f67ff3479210",
-      "size": 3508
+      "sha256": "6966e7241c1f0e90c87137cb2a81b4b41ec4192c4ab8bc89dabd975024d17358",
+      "size": 3519
     },
     "firstrun.py": {
-      "sha256": "77613b6fc8e093c586d37c3e23c5492cf6905dcce6b42989c47818ef91230733",
-      "size": 5717
+      "sha256": "4d38484c7c82531d76bc57742e6c59f0d2eb188f7761ad38051c1492e9e7471d",
+      "size": 5727
     },
     "updater.py": {
       "sha256": "cdfe5b78d024a79c3395125b433a1890cd23a58dc0e9df0af8bc2cc555893f0c",
       "size": 6737
     },
-    "run.bat": {
+    "OPEN THE APP.bat": {
       "sha256": "e29043cdf472fdb66bdde75b19d7a0f21125afb6ced277dc8b14ccfcb0e33e61",
       "size": 1885
     },
@@ -35,12 +35,12 @@
       "size": 3977
     },
     "templates/records.html": {
-      "sha256": "f605aa3c61e9e21beee5fc959c3e00be4a5ed658d0befebf19c6087095778441",
-      "size": 10462
+      "sha256": "b4a404f17ce323f76fb207b7be0a2389035bd347fad82b1411c19c2e241903b5",
+      "size": 10450
     },
     "static/style.css": {
-      "sha256": "497f34880d4bd69926c3369e106b1eb67804a77351d6c937b5f4687d9111ecee",
-      "size": 8654
+      "sha256": "c1eafcf0e0f8504a4f7048003ec63a5465ee0078c02aaabb31298861fe51a49f",
+      "size": 8748
     }
   }
 }

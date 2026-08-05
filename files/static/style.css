@@ -105,9 +105,11 @@ button:hover{filter:brightness(1.08)}
 /* translucent so the one value reads on both the light and the dark surface */
 .edit-tbl tr.flagged{background:rgba(224,160,58,.15)}
 .w-del{width:34px}
-.w-added{width:120px}
+/* narrower now the date is short, and it must never break across lines */
+.w-added{width:86px}
 .ro-cell{color:var(--muted);font-size:13px;padding-left:9px;white-space:nowrap}
-.added-cell{color:var(--muted);font-size:12.5px;white-space:nowrap;padding-left:9px}
+.added-cell{color:var(--muted);font-size:12.5px;white-space:nowrap;
+  padding-left:9px;text-align:right}
 .hist-btn{background:none;border:1px solid var(--line);border-radius:20px;padding:4px 12px;
   color:var(--muted);font-size:12px;font-weight:700;cursor:pointer;display:inline-flex;
   align-items:center;gap:6px;flex:0 0 auto}

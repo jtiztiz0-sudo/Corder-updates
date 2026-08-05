@@ -86,13 +86,13 @@
           <td class="ro-cell"><span class="wl-pill {{ 'done' if done else 'pending' }}">{{
             m.archive.done_label if done else m.archive.open_label }}</span></td>
           {% elif f.owner_only %}
-          <td class="ro-cell">{{ (r[f.name] or '')[:10] if f.name.endswith('_at') else (r[f.name] if r[f.name] is not none else '') }}</td>
+          <td class="ro-cell">{{ r[f.name]|shortdate if f.name.endswith('_at') else (r[f.name] if r[f.name] is not none else '') }}</td>
           {% else %}
           <td>{{ field_input(f, r[f.name], 'cell', false) }}</td>
           {% endif %}
           {% endfor %}
           {# recorded by the app itself, so it's shown but never typed #}
-          {% if m.show_added %}<td class="w-added added-cell">{{ (r['created_at'] or '')[:10] }}</td>{% endif %}
+          {% if m.show_added %}<td class="w-added added-cell">{{ r['created_at']|shortdate }}</td>{% endif %}
           <td class="w-del"><button type="button" class="xbtn" data-del title="Delete">✕</button></td>
         </tr>
         {% endfor %}
@@ -123,10 +123,10 @@
           {% if f.is_status and m.archive %}
           <td class="ro-cell"><span class="wl-pill done">{{ m.archive.done_label }}</span></td>
           {% else %}
-          <td class="ro-cell">{{ (r[f.name] or '')[:10] if f.name.endswith('_at') else (r[f.name] if r[f.name] is not none else '') }}</td>
+          <td class="ro-cell">{{ r[f.name]|shortdate if f.name.endswith('_at') else (r[f.name] if r[f.name] is not none else '') }}</td>
           {% endif %}
           {% endfor %}
-          {% if m.show_added %}<td class="w-added added-cell">{{ (r['created_at'] or '')[:10] }}</td>{% endif %}
+          {% if m.show_added %}<td class="w-added added-cell">{{ r['created_at']|shortdate }}</td>{% endif %}
         </tr>
         {% endfor %}
       </tbody>
