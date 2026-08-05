@@ -29,7 +29,8 @@ try:
     import firstrun
     import modules as _m
     _home = firstrun.ensure_installed(os.path.dirname(os.path.abspath(__file__)),
-                                      (_m.BUSINESS or {}).get("name", "App"))
+                                      (_m.BUSINESS or {}).get("name", "App"),
+                                      (_m.BUSINESS or {}).get("id", ""))
     if _home and firstrun.relaunch(_home):
         raise SystemExit(0)
 except SystemExit:

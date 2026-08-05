@@ -1,6 +1,6 @@
 {
-  "version": 5,
-  "published": "2026-08-05 16:06",
+  "version": 7,
+  "published": "2026-08-05 16:30",
   "files": {
     "app.py": {
       "sha256": "884c9d69682f62a65e0bb22828b3c229aeb5cea2d425602fce2a0d61450ec03a",
@@ -11,12 +11,12 @@
       "size": 3179
     },
     "desktop.py": {
-      "sha256": "6966e7241c1f0e90c87137cb2a81b4b41ec4192c4ab8bc89dabd975024d17358",
-      "size": 3519
+      "sha256": "d9faf83848df9e1667dfc180c10c78c0e94f9b790a6cf68cc34053db6620bd97",
+      "size": 3592
     },
     "firstrun.py": {
-      "sha256": "4d38484c7c82531d76bc57742e6c59f0d2eb188f7761ad38051c1492e9e7471d",
-      "size": 5727
+      "sha256": "701fbfd097800cf71d942cf6082f0c93adceff6e9d1ad6756b8e8bd6c7c79672",
+      "size": 8362
     },
     "updater.py": {
       "sha256": "cdfe5b78d024a79c3395125b433a1890cd23a58dc0e9df0af8bc2cc555893f0c",

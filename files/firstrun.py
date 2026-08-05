@@ -32,16 +32,24 @@ SKIP_ENV = "APP_SKIP_INSTALL"
 CREATE_NO_WINDOW = 0x08000000
 
 
-def folder_name(app_name: str) -> str:
-    """A stable folder name from the business name, so renaming the unzipped
-    folder can't cause a second install somewhere else."""
-    slug = re.sub(r"[^a-z0-9]+", "_", (app_name or "app").lower()).strip("_")
-    return slug or "app"
+def _slug(text: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "_", (text or "app").lower()).strip("_") or "app"
 
 
-def install_home(app_name: str) -> str:
+def folder_name(app_name: str, app_id: str = "") -> str:
+    """Where this app lives, keyed on its PERMANENT id -- never on its name.
+
+    Keying it on the name was a real bug: rename the business and the app
+    looked for a folder that didn't exist, installed itself a second time,
+    and left every record behind in the old one. From the owner's side their
+    data had simply disappeared.
+    """
+    return _slug(app_id) if app_id else _slug(app_name)
+
+
+def install_home(app_name: str, app_id: str = "") -> str:
     base = os.environ.get("LOCALAPPDATA") or os.path.expanduser("~")
-    return os.path.join(base, "Programs", folder_name(app_name))
+    return os.path.join(base, "Programs", folder_name(app_name, app_id))
 
 
 def _same(a: str, b: str) -> bool:
@@ -116,19 +124,64 @@ def make_shortcuts(home: str, app_name: str) -> list:
             if line.strip() and os.path.isfile(line.strip())]
 
 
-def ensure_installed(app_dir: str, app_name: str):
+def _tidy_old_shortcuts(current_name: str, home: str) -> None:
+    """Delete Desktop/Start-menu shortcuts this app made under a previous
+    name. Only ones whose target is inside our own install folder, so it can
+    never remove somebody else's shortcut."""
+    keep = re.sub(r'[\/:*?"<>|]', "", current_name or "").strip() + ".lnk"
+    mine = os.path.abspath(home)
+    script = (
+        "$keep = %s; $mine = %s;"
+        "foreach ($d in @([Environment]::GetFolderPath('Desktop'),"
+        " (Join-Path ([Environment]::GetFolderPath('StartMenu')) 'Programs'))) {"
+        "  if (-not (Test-Path $d)) { continue }"
+        "  foreach ($f in Get-ChildItem $d -Filter *.lnk) {"
+        "    if ($f.Name -eq $keep) { continue }"
+        "    $s = (New-Object -ComObject WScript.Shell).CreateShortcut($f.FullName);"
+        "    if ($s.WorkingDirectory -and $s.WorkingDirectory -eq $mine) { Remove-Item $f.FullName -Force }"
+        "  } }"
+    ) % (_ps_quote(keep), _ps_quote(mine))
+    try:
+        subprocess.run([_powershell(), "-NoProfile", "-NonInteractive",
+                        "-ExecutionPolicy", "Bypass", "-Command", script],
+                       capture_output=True, creationflags=CREATE_NO_WINDOW)
+    except OSError:
+        pass
+
+
+def ensure_installed(app_dir: str, app_name: str, app_id: str = ""):
     """Returns the folder the app should actually be running from, or None if
     that's already here."""
     if os.environ.get(SKIP_ENV) or os.name != "nt":
         return None
-    home = install_home(app_name)
+    home = install_home(app_name, app_id)
     if _same(app_dir, home):
         make_shortcuts(home, app_name)      # keep them alive if deleted
+        _tidy_old_shortcuts(app_name, home)
         return None
     # Already installed: hand over to that copy. Never overwrite it -- their
     # records are in there.
     if os.path.isfile(os.path.join(home, "desktop.py")):
+        # Rename the icon if the business has been renamed. The copy we're
+        # about to hand over to runs with setup skipped, so if this doesn't
+        # happen here it never happens, and the customer keeps clicking an
+        # icon with the old name on it.
+        make_shortcuts(home, app_name)
+        _tidy_old_shortcuts(app_name, home)
         return home
+    # An install made before this app had a permanent id -- its folder is
+    # named after what the business used to be called. Adopt it, records and
+    # all, instead of starting an empty one beside it.
+    if app_id:
+        legacy = install_home(app_name, "")
+        if not _same(legacy, home) and os.path.isfile(os.path.join(legacy, "desktop.py")):
+            try:
+                os.rename(legacy, home)
+                make_shortcuts(home, app_name)
+                _tidy_old_shortcuts(app_name, home)
+                return home
+            except OSError:
+                return legacy               # in use -- keep using it as it is
     try:
         shutil.copytree(app_dir, home, dirs_exist_ok=True,
                         ignore=shutil.ignore_patterns("__pycache__", "backup", "*.pyc"))
