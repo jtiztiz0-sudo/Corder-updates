@@ -126,7 +126,7 @@ def apply(manifest) -> bool:
             if dest is None:
                 _log("refused suspicious path in manifest: %s" % rel)
                 return False
-            # A file name can legally contain spaces ("OPEN THE APP.bat"
+            # A file name can legally contain spaces ("OPEN-THE-APP.bat"
             # does) and a raw space is not valid in a URL -- urllib rejects
             # it outright and the whole update fails, silently. Quote it,
             # keeping the "/" separators intact.

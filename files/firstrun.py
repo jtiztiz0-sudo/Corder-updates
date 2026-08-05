@@ -106,7 +106,7 @@ def make_shortcuts(home: str, app_name: str) -> list:
     if os.path.isfile(exe):
         args = '"%s"' % os.path.join(home, "desktop.py")
     else:
-        exe, args = os.path.join(home, "OPEN THE APP.bat"), ""
+        exe, args = os.path.join(home, "OPEN-THE-APP.bat"), ""
     icon = os.path.join(home, "static", "icon.ico")
     safe = re.sub(r'[\\/:*?"<>|]', "", app_name or "App").strip() or "App"
 

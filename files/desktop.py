@@ -1,7 +1,7 @@
 """
 Double-click launcher: starts the app and opens it in its own window.
 
-Run with pythonw.exe (or "OPEN THE APP.bat") for no console window. Picks whatever port
+Run with pythonw.exe (or "OPEN-THE-APP.bat") for no console window. Picks whatever port
 is free, so several of these can run at once without colliding.
 
 When CorderHome launches this, it passes GENAPP_X/GENAPP_Y so the window
