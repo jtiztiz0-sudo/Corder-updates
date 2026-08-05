@@ -35,8 +35,9 @@ import json
 import shutil
 import hashlib
 import tempfile
-import urllib.request
 import urllib.error
+import urllib.parse
+import urllib.request
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 MANIFEST_URL = "https://raw.githubusercontent.com/jtiztiz0-sudo/Corder-updates/main/manifest.json"          # blank = updates switched off
@@ -125,7 +126,11 @@ def apply(manifest) -> bool:
             if dest is None:
                 _log("refused suspicious path in manifest: %s" % rel)
                 return False
-            blob = _get(base + rel)
+            # A file name can legally contain spaces ("OPEN THE APP.bat"
+            # does) and a raw space is not valid in a URL -- urllib rejects
+            # it outright and the whole update fails, silently. Quote it,
+            # keeping the "/" separators intact.
+            blob = _get(base + urllib.parse.quote(rel))
             want = (meta or {}).get("sha256", "")
             got = hashlib.sha256(blob).hexdigest()
             if want != got:
