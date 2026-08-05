@@ -1,0 +1,263 @@
+{% extends "base.html" %}
+{% block title %}{{ m.label }} — {{ BUSINESS.name }}{% endblock %}
+
+{% macro field_input(f, value, cls, is_add) -%}
+  {%- if f.html == 'textarea' -%}
+    <textarea class="{{ cls }}" data-field="{{ f.name }}" rows="1"
+              placeholder="{{ f.label }}">{{ value if value is not none else '' }}</textarea>
+  {%- elif f.html == 'select' -%}
+    {#- the add form defaults to the first option; a saved row always keeps a
+        blank escape hatch so a status can be cleared again -#}
+    <select class="{{ cls }}" data-field="{{ f.name }}"
+            {% if f.is_status %}data-status{% endif %}>
+      {% if not is_add %}<option value="" {{ 'selected' if not value }}>—</option>{% endif %}
+      {% for o in f.options %}
+      <option value="{{ o }}" {{ 'selected' if value == o or (is_add and loop.first) }}>{{ o }}</option>
+      {% endfor %}
+    </select>
+  {%- elif f.html == 'check' -%}
+    <input type="checkbox" class="{{ cls }} chk" data-field="{{ f.name }}" {{ 'checked' if value }}>
+  {%- else -%}
+    <input type="{{ f.html }}" class="{{ cls }}" data-field="{{ f.name }}"
+           {% if f.step %}step="{{ f.step }}"{% endif %}
+           placeholder="{{ f.label }}" value="{{ value if value is not none else '' }}">
+  {%- endif -%}
+{%- endmacro %}
+
+{% block content %}
+
+<div class="page-head">
+  <h1>{{ m.icon }} {{ m.label }}</h1>
+  {% if retired %}
+  <button type="button" class="hist-btn" id="histBtn">History
+    <span class="hist-n">{{ retired|length }}</span></button>
+  {% endif %}
+  <input type="search" id="search" class="search" placeholder="Search…">
+</div>
+
+{% if m.blurb %}
+<div class="blurb">
+  <p>{{ m.blurb }}</p>
+  {% if m.blurb_tips %}
+  <p class="blurb-lead">The three things that help most:</p>
+  <ul class="blurb-tips">
+    {% for t in m.blurb_tips %}<li>{{ t }}</li>{% endfor %}
+  </ul>
+  <p class="blurb-foot">If it went wrong on one particular booking or customer,
+    say which one — that's usually what cracks it.</p>
+  {% endif %}
+</div>
+{% endif %}
+
+<div class="card">
+  <div class="add-grid">
+    {% for f in m.fields %}{% if not f.owner_only %}
+    <div class="fld{{ ' wide' if f.wide }}">
+      <label>{{ f.label }}{% if f.required %} <span class="req">*</span>{% endif %}</label>
+      {{ field_input(f, None, 'add-in', true) }}
+    </div>
+    {% endif %}{% endfor %}
+  </div>
+  <div class="add-foot">
+    <button type="button" id="addBtn">+ Add {{ m.singular }}</button>
+    <span class="err" id="addErr"></span>
+  </div>
+</div>
+
+<div class="card">
+  <div class="tbl-wrap">
+    <table class="tbl edit-tbl">
+      <thead>
+        <tr>
+          {% for f in m.fields %}<th>{{ f.label }}</th>{% endfor %}
+          {% if m.show_added %}<th class="w-added">Added</th>{% endif %}
+          <th class="w-del"></th>
+        </tr>
+      </thead>
+      <tbody id="rows">
+        {% for r in rows %}
+        {% set flagged = m.alert and r[m.alert.field] is not none and r[m.alert.vs] is not none
+                         and r[m.alert.field] <= r[m.alert.vs] %}
+        <tr data-id="{{ r['id'] }}" class="{{ 'flagged' if flagged }}"
+            {% if flagged %}title="{{ m.alert.label }}"{% endif %}>
+          {% for f in m.fields %}
+          {% if f.owner_only and f.is_status and m.archive %}
+          {%- set done = r[f.name] == m.archive.done_value %}
+          <td class="ro-cell"><span class="wl-pill {{ 'done' if done else 'pending' }}">{{
+            m.archive.done_label if done else m.archive.open_label }}</span></td>
+          {% elif f.owner_only %}
+          <td class="ro-cell">{{ (r[f.name] or '')[:10] if f.name.endswith('_at') else (r[f.name] if r[f.name] is not none else '') }}</td>
+          {% else %}
+          <td>{{ field_input(f, r[f.name], 'cell', false) }}</td>
+          {% endif %}
+          {% endfor %}
+          {# recorded by the app itself, so it's shown but never typed #}
+          {% if m.show_added %}<td class="w-added added-cell">{{ (r['created_at'] or '')[:10] }}</td>{% endif %}
+          <td class="w-del"><button type="button" class="xbtn" data-del title="Delete">✕</button></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class="empty" id="empty" style="display:{{ 'none' if rows else 'block' }}">
+    No {{ m.label|lower }} yet — add one above.</p>
+  {% if m.sum_field %}
+  <div class="total-bar">Total <strong id="total">${{ '%.2f'|format(total or 0) }}</strong></div>
+  {% endif %}
+</div>
+
+{% if retired %}
+{# finished more than a day ago -- kept, just out of the way #}
+<div class="card" id="histCard" style="display:none">
+  <h2>History</h2>
+  <div class="tbl-wrap">
+    <table class="tbl">
+      <thead>
+        <tr>{% for f in m.fields %}<th>{{ f.label }}</th>{% endfor %}
+          {% if m.show_added %}<th class="w-added">Added</th>{% endif %}</tr>
+      </thead>
+      <tbody>
+        {% for r in retired %}
+        <tr>
+          {% for f in m.fields %}
+          {% if f.is_status and m.archive %}
+          <td class="ro-cell"><span class="wl-pill done">{{ m.archive.done_label }}</span></td>
+          {% else %}
+          <td class="ro-cell">{{ (r[f.name] or '')[:10] if f.name.endswith('_at') else (r[f.name] if r[f.name] is not none else '') }}</td>
+          {% endif %}
+          {% endfor %}
+          {% if m.show_added %}<td class="w-added added-cell">{{ (r['created_at'] or '')[:10] }}</td>{% endif %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+  var KEY = "{{ m.key }}";
+  var SUM_FIELD = {{ ('"' ~ m.sum_field ~ '"') if m.sum_field else 'null' }};
+  var rowsEl = document.getElementById("rows");
+  var emptyEl = document.getElementById("empty");
+
+  // Status colours. Anything not listed just stays neutral, so a status
+  // renamed in modules.py still works -- it only loses its colour.
+  var TONE = {
+    "done": "good", "paid": "good", "delivered": "good", "accepted": "good",
+    "confirmed": "good", "won": "good", "returned": "good", "active": "good",
+    "in progress": "warn", "sent": "warn", "waiting": "warn", "booked": "warn",
+    "scheduled": "warn", "out": "warn", "out for delivery": "warn",
+    "reserved": "warn", "contacted": "warn", "quoted": "warn", "draft": "warn",
+    "new": "warn", "unpaid": "bad", "overdue": "bad", "late": "bad",
+    "declined": "bad", "lost": "bad", "no-show": "bad", "failed": "bad"
+  };
+  function paintStatus(sel) {
+    var tone = TONE[(sel.value || "").toLowerCase()] || "";
+    sel.className = sel.className.replace(/\s*st-\w+/g, "") + (tone ? " st-" + tone : "");
+  }
+  function paintAll(scope) {
+    (scope || document).querySelectorAll("[data-status]").forEach(paintStatus);
+  }
+  function grow(ta) { ta.style.height = "auto"; ta.style.height = (ta.scrollHeight + 2) + "px"; }
+  function growAll(scope) { (scope || document).querySelectorAll("textarea").forEach(grow); }
+  paintAll(); growAll();
+
+  function recalcTotal() {
+    if (!SUM_FIELD) return;
+    var sum = 0;
+    rowsEl.querySelectorAll('[data-field="' + SUM_FIELD + '"]').forEach(function (el) {
+      sum += Number(el.value) || 0;
+    });
+    document.getElementById("total").textContent = APP.money(sum);
+  }
+
+  // ---- add ----
+  var addErr = document.getElementById("addErr");
+  function collectNew() {
+    var body = {};
+    document.querySelectorAll(".add-in").forEach(function (el) {
+      body[el.dataset.field] = el.type === "checkbox" ? el.checked : el.value;
+    });
+    return body;
+  }
+  document.getElementById("addBtn").addEventListener("click", function () {
+    addErr.textContent = "";
+    APP.post("/m/" + KEY + "/add", collectNew()).then(function (d) {
+      if (!d.ok) { addErr.textContent = d.error || "Couldn't add that."; return; }
+      // reload so the new row lands in the right sort position with the
+      // right formatting -- cheaper than rebuilding it correctly in JS
+      window.location.reload();
+    });
+  });
+  // Enter in any single-line add field = Add
+  document.querySelectorAll(".add-in").forEach(function (el) {
+    if (el.tagName === "TEXTAREA") return;
+    el.addEventListener("keydown", function (e) {
+      if (e.key === "Enter") { e.preventDefault(); document.getElementById("addBtn").click(); }
+    });
+  });
+
+  // ---- edit in place (save on change/blur) ----
+  function save(el) {
+    var tr = el.closest("tr");
+    var value = el.type === "checkbox" ? el.checked : el.value;
+    return APP.post("/m/" + KEY + "/update",
+                    {id: tr.dataset.id, field: el.dataset.field, value: value});
+  }
+  rowsEl.addEventListener("change", function (e) {
+    var el = e.target;
+    if (!el.dataset.field) return;
+    save(el);
+    if (el.hasAttribute("data-status")) paintStatus(el);
+    if (SUM_FIELD && el.dataset.field === SUM_FIELD) recalcTotal();
+  });
+  rowsEl.addEventListener("blur", function (e) {
+    if (e.target.dataset && e.target.dataset.field && e.target.tagName === "TEXTAREA") save(e.target);
+  }, true);
+  rowsEl.addEventListener("input", function (e) {
+    if (e.target.tagName === "TEXTAREA") grow(e.target);
+  });
+
+  // ---- delete ----
+  rowsEl.addEventListener("click", function (e) {
+    if (!e.target.matches("[data-del]")) return;
+    var tr = e.target.closest("tr");
+    if (!confirm("Delete this {{ m.singular }}?")) return;
+    APP.post("/m/" + KEY + "/delete", {id: tr.dataset.id}).then(function (d) {
+      if (!d.ok) return;
+      tr.remove();
+      recalcTotal();
+      emptyEl.style.display = rowsEl.children.length ? "none" : "block";
+    });
+  });
+
+  // ---- History ----
+  var histBtn = document.getElementById("histBtn");
+  if (histBtn) {
+    var histCard = document.getElementById("histCard");
+    histBtn.addEventListener("click", function () {
+      var open = histCard.style.display === "none";
+      histCard.style.display = open ? "block" : "none";
+      histBtn.classList.toggle("on", open);
+    });
+  }
+
+  // ---- search ----
+  document.getElementById("search").addEventListener("input", function () {
+    var q = this.value.toLowerCase().trim();
+    Array.prototype.forEach.call(rowsEl.children, function (tr) {
+      if (!q) { tr.style.display = ""; return; }
+      var hit = false;
+      tr.querySelectorAll("input,textarea,select").forEach(function (el) {
+        if (el.type === "checkbox") return;
+        if ((el.value || "").toLowerCase().indexOf(q) !== -1) hit = true;
+      });
+      tr.style.display = hit ? "" : "none";
+    });
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h1>{{ BUSINESS.name }}</h1>
+{% if BUSINESS.tagline %}<p class="muted sub">{{ BUSINESS.tagline }}</p>{% endif %}
+
+<div class="stat-grid">
+  {% for c in cards %}
+  <a class="stat-card" href="{{ url_for('records', key=c['m'].key) }}">
+    <div class="stat-icon">{{ c['m'].icon }}</div>
+    <div class="stat-num">{{ c['count'] }}</div>
+    <div class="stat-label">{{ c['m'].label }}</div>
+    {% if c['total'] is not none %}
+      <div class="stat-sub">${{ '%.2f'|format(c['total']) }}</div>
+    {% elif c['m'].date_field %}
+      <div class="stat-sub">{{ c['today'] }} today</div>
+    {% endif %}
+  </a>
+  {% endfor %}
+</div>
+
+{% if wishes %}
+<div class="card">
+  <div class="wl-head">
+    <h2 style="margin:0">💡 What you've asked for</h2>
+    <a class="wl-add" href="{{ url_for('records', key='wishlist') }}">+ ask for something</a>
+  </div>
+  <table class="tbl">
+    <tbody>
+      {% for w in wishes %}
+      <tr>
+        <td class="w-state">
+          {% if w['status'] == done_status %}<span class="wl-pill done">Fixed</span>
+          {% else %}<span class="wl-pill pending">Pending</span>{% endif %}
+        </td>
+        <td class="wl-text">{{ w['request'] }}</td>
+        <td class="w-open muted tiny">{{ (w['created_at'] or '')[:10] }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+<div class="card">
+  <h2>Today — {{ today }}</h2>
+  {% if today_rows %}
+  <table class="tbl">
+    <tbody>
+      {% for t in today_rows %}
+      <tr>
+        <td class="w-tag"><span class="tag">{{ t['m'].icon }} {{ t['m'].label }}</span></td>
+        {% for f in t['m'].fields[:3] %}
+          <td>{{ t['r'][f.name] if t['r'][f.name] is not none else '' }}</td>
+        {% endfor %}
+        <td class="w-open"><a href="{{ url_for('records', key=t['m'].key) }}">open</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="empty">Nothing dated today.</p>
+  {% endif %}
+</div>
+
+{# somewhere to jot things down without it having to be a record of anything.
+   Saves as you type -- no Save button to forget. #}
+<div class="card">
+  <h2>Notes</h2>
+  <textarea id="dashNotes" class="dash-notes"
+            placeholder="Anything you want to remember — orders to chase, who's covering Friday, what to tell the supplier…">{{ notes }}</textarea>
+  <p class="muted note-saved" id="notesSaved">Saved</p>
+</div>
+<script>
+  (function () {
+    var box = document.getElementById("dashNotes");
+    var flag = document.getElementById("notesSaved");
+    var timer = null;
+    function grow() { box.style.height = "auto"; box.style.height = (box.scrollHeight + 2) + "px"; }
+    grow();
+    box.addEventListener("input", function () {
+      grow();
+      clearTimeout(timer);
+      timer = setTimeout(function () {
+        APP.post("{{ url_for('dashboard_notes') }}", {text: box.value}).then(function () {
+          flag.classList.add("show");
+          setTimeout(function () { flag.classList.remove("show"); }, 1400);
+        });
+      }, 500);
+    });
+  })();
+</script>
+
+{% if just_fixed %}
+{# Something they asked for has been done since they last looked. Shown once
+   -- dismissing it records what was in it, so the same news never reappears. #}
+<div class="fixed-back" id="fixedBack"></div>
+<div class="fixed-note" id="fixedNote">
+  <h2>✅ Sorted for you</h2>
+  <p class="muted">{{ 'This has' if just_fixed|length == 1 else 'These have' }}
+     been fixed since you were last in here:</p>
+  <ul>
+    {% for w in just_fixed %}<li>{{ w['request'] }}</li>{% endfor %}
+  </ul>
+  <button type="button" id="fixedOk">Got it</button>
+</div>
+<script>
+  document.getElementById("fixedOk").addEventListener("click", function () {
+    fetch("{{ url_for('wishlist_seen') }}", {method: "POST"}).catch(function () {});
+    document.getElementById("fixedNote").style.display = "none";
+    document.getElementById("fixedBack").style.display = "none";
+  });
+</script>
+{% endif %}
+
+{% endblock %}

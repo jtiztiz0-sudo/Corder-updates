@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ BUSINESS.name }}{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  {% if BUSINESS.theme %}
+  {#- this business's own colours. Listed against every root selector so it
+      beats the stylesheet's light/dark blocks by source order alone -#}
+  <style>
+    :root, :root[data-theme="dark"], :root[data-theme="light"] {
+      {% for k, v in BUSINESS.theme.items() %}{{ k }}: {{ v }};
+      {% endfor %}
+    }
+  </style>
+  {% endif %}
+  <script>
+    // apply the saved theme before first paint, so there's no flash of the
+    // wrong one. Nothing saved = follow the operating system.
+    (function () {
+      try {
+        var s = localStorage.getItem("app_theme");
+        if (s === "dark" || s === "light") document.documentElement.setAttribute("data-theme", s);
+      } catch (e) {}
+    })();
+  </script>
+</head>
+<body>
+  <header>
+    <div class="brand"><a href="{{ url_for('dashboard') }}">{{ BUSINESS.name }}</a></div>
+    <nav>
+      <a href="{{ url_for('dashboard') }}"
+         class="{{ 'active' if request.endpoint == 'dashboard' }}">Dashboard</a>
+      {% for m in MODULES if m.key != 'wishlist' %}
+      <a href="{{ url_for('records', key=m.key) }}"
+         class="{{ 'active' if request.view_args and request.view_args.get('key') == m.key }}"
+         >{{ m.icon }} {{ m.label }}</a>
+      {% endfor %}
+    </nav>
+    {% for m in MODULES if m.key == 'wishlist' %}
+    <a class="tool-tab {{ 'active' if request.view_args and request.view_args.get('key') == 'wishlist' }}"
+       href="{{ url_for('records', key='wishlist') }}"
+       title="Ask for something to be changed">{{ m.icon }} {{ m.label }}</a>
+    {% endfor %}
+    <button type="button" id="themeBtn" class="theme-btn" title="Toggle dark mode">
+      <span id="themeIcon">☀</span>
+    </button>
+  </header>
+  <main>{% block content %}{% endblock %}</main>
+  <script>
+    (function () {
+      var btn = document.getElementById("themeBtn"), icon = document.getElementById("themeIcon");
+      function systemDark() {
+        return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+      }
+      function current() {
+        return document.documentElement.getAttribute("data-theme") || (systemDark() ? "dark" : "light");
+      }
+      function paint() { icon.textContent = current() === "dark" ? "☾" : "☀"; }
+      paint();
+      btn.addEventListener("click", function () {
+        var next = current() === "dark" ? "light" : "dark";
+        document.documentElement.setAttribute("data-theme", next);
+        try { localStorage.setItem("app_theme", next); } catch (e) {}
+        paint();
+      });
+    })();
+
+    window.APP = {
+      post: function (url, body) {
+        return fetch(url, {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify(body || {})
+        }).then(function (r) { return r.json().catch(function () { return {}; }); });
+      },
+      money: function (n) {
+        return "$" + (Math.round((Number(n) || 0) * 100) / 100).toFixed(2)
+          .replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+      }
+    };
+  </script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>
