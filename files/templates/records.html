@@ -35,20 +35,6 @@
   <input type="search" id="search" class="search" placeholder="Search…">
 </div>
 
-{% if m.blurb %}
-<div class="blurb">
-  <p>{{ m.blurb }}</p>
-  {% if m.blurb_tips %}
-  <p class="blurb-lead">The three things that help most:</p>
-  <ul class="blurb-tips">
-    {% for t in m.blurb_tips %}<li>{{ t }}</li>{% endfor %}
-  </ul>
-  <p class="blurb-foot">If it went wrong on one particular booking or customer,
-    say which one — that's usually what cracks it.</p>
-  {% endif %}
-</div>
-{% endif %}
-
 <div class="card">
   <div class="add-grid">
     {% for f in m.fields %}{% if not f.owner_only %}
