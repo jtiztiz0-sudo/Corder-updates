@@ -154,6 +154,14 @@ def ensure_installed(app_dir: str, app_name: str, app_id: str = ""):
     that's already here."""
     if os.environ.get(SKIP_ENV) or os.name != "nt":
         return None
+    # Never install one of the developer's own copies. The master under
+    # generated/ and the throwaway under sandbox/ are meant to run exactly
+    # where they are -- installing them made "Test copy" quietly hand over to
+    # the customer's installed app, so a fix under test opened the wrong app
+    # and looked like it had never been applied.
+    parts = [p for p in os.path.abspath(app_dir).lower().split(os.sep) if p]
+    if "sandbox" in parts or "generated" in parts:
+        return None
     home = install_home(app_name, app_id)
     if _same(app_dir, home):
         make_shortcuts(home, app_name)      # keep them alive if deleted
