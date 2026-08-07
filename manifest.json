@@ -1,6 +1,6 @@
 {
-  "version": 15,
-  "published": "2026-08-06 16:34",
+  "version": 16,
+  "published": "2026-08-06 19:18",
   "files": {
     "app.py": {
       "sha256": "69bd07d1684e655973ae9451b8b45026b9c29ae3de6b7c7f619cc196b7cd9b75",
@@ -19,8 +19,8 @@
       "size": 8861
     },
     "updater.py": {
-      "sha256": "5a8294f87b86582da01feaf876d9f0286d26607a00b160115f21f03b17acafb1",
-      "size": 7724
+      "sha256": "1338acea266febd6b9894e9da0fef3eff021d29a42fc9c80e652a601c18ec541",
+      "size": 11723
     },
     "OPEN-THE-APP.bat": {
       "sha256": "e29043cdf472fdb66bdde75b19d7a0f21125afb6ced277dc8b14ccfcb0e33e61",
@@ -41,6 +41,26 @@
     "static/style.css": {
       "sha256": "20698df3b603fb69ff16a89ba0520a461cd6a58d8a07a00c80f46f81a97eb10e",
       "size": 9056
+    }
+  },
+  "apps": {
+    "t_town_closet": {
+      "version": 1,
+      "files": {
+        "modules.py": {
+          "sha256": "4c896643caa7ca81b6b93b5f2fac28ece46089370b7f34d5ea64c2e3377c3f80",
+          "size": 5312
+        }
+      }
+    },
+    "jake_s_junkyard": {
+      "version": 1,
+      "files": {
+        "modules.py": {
+          "sha256": "f965f839cb352bcb75e93bb8240a16d8bf2cf015195f5865caec3435c00fc95f",
+          "size": 11678
+        }
+      }
     }
   }
 }
