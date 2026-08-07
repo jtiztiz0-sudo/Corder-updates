@@ -82,6 +82,12 @@
     };
   </script>
   {% block scripts %}{% endblock %}
+{% if COPY_KIND != 'customer' %}
+<div class="copy-flag copy-{{ COPY_KIND }}">
+  {{ 'TEST COPY - nothing here reaches the customer' if COPY_KIND == 'test'
+     else 'MY MASTER - not what the customer is running' }}
+</div>
+{% endif %}
 <span class="copy-dot copy-{{ COPY_KIND }}" aria-hidden="true"
       title="{{ {'customer':'This is the copy a customer runs','master':'Your master copy - CorderHome reads the wishlist from this one','test':'Test copy - nothing here reaches the customer'}[COPY_KIND] }}"></span>
 </body>

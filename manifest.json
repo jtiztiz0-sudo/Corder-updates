@@ -1,6 +1,6 @@
 {
-  "version": 17,
-  "published": "2026-08-06 22:30",
+  "version": 18,
+  "published": "2026-08-06 22:47",
   "files": {
     "app.py": {
       "sha256": "03c2d828828242c993d422226f0205528b2abe388f1dc77af75d863adfa1cd32",
@@ -11,8 +11,8 @@
       "size": 3179
     },
     "desktop.py": {
-      "sha256": "b837b148ca7c816bfce17796a9a49ab854528953fb24e25741169886a8c526b4",
-      "size": 3592
+      "sha256": "93c4d19c3bfb1fd3c424a5cff34bef80c63226fe790b0b5c4a157e3c32d2c960",
+      "size": 4357
     },
     "firstrun.py": {
       "sha256": "237189b94d6f1c1e28cc34bda0f7a8659b37f8b959bac3c6e2dbdb866456465a",
@@ -35,8 +35,8 @@
       "size": 1944
     },
     "templates/base.html": {
-      "sha256": "cce9a20ed30439671c16072d79e5102e5ecffd949d542218936f8a085a91b2ea",
-      "size": 3644
+      "sha256": "e451a6d40874b274385d0cf912f8929adfc04ba458c4eab8f02b64d89024006f",
+      "size": 3877
     },
     "templates/dashboard.html": {
       "sha256": "f49086c669b8b3fdff4b85dac351ec56f76297eebeed337de4d3c889222669e9",
@@ -51,8 +51,8 @@
       "size": 1911
     },
     "static/style.css": {
-      "sha256": "20698df3b603fb69ff16a89ba0520a461cd6a58d8a07a00c80f46f81a97eb10e",
-      "size": 9056
+      "sha256": "9c8ef0c52521c2c845c75eda63c88cbaa37ce349f123c409f4d8c72f9c04a278",
+      "size": 9543
     }
   },
   "apps": {
@@ -60,7 +60,7 @@
       "version": 1,
       "files": {
         "modules.py": {
-          "sha256": "ee4801e3872a1916067a29a2ed4559bda764d83ed15c565ade6f46dfff7767be",
+          "sha256": "4b7a786c641b363f12a364c5219a171869d1d4cd350ca9402e54e691a43cbb49",
           "size": 5312
         }
       }
@@ -69,7 +69,7 @@
       "version": 1,
       "files": {
         "modules.py": {
-          "sha256": "24f2f35e0599ddbd3ea3dd9fbd21a75f1678002480571f837b05126eb19be015",
+          "sha256": "01618b96e5297a0b3f53f6d41ddeaf7c93952297833a4b6d95848f2bfab985a5",
           "size": 11678
         }
       }

@@ -88,10 +88,31 @@ def _start_pos():
         return None, None
 
 
+def window_title(name: str) -> str:
+    """What goes in the title bar.
+
+    Two of these are often open at once -- the customer's copy and a test copy
+    of the same app -- and the taskbar is where you actually tell windows
+    apart. The marker goes at the FRONT on purpose: a taskbar button truncates
+    the END of a title, which is exactly where a suffix would have been.
+
+    A customer's copy is left completely alone, so they never see any of this.
+    """
+    try:
+        from app import COPY_KIND
+    except Exception:
+        return name                      # can't tell -- say nothing
+    if COPY_KIND == "test":
+        return "TEST COPY · " + name
+    if COPY_KIND == "master":
+        return "MY MASTER · " + name
+    return name
+
+
 def main() -> None:
     threading.Thread(target=_serve, daemon=True).start()
     _wait_until_up()
-    title = modules.BUSINESS.get("name") or "My Business"
+    title = window_title(modules.BUSINESS.get("name") or "My Business")
     start_x, start_y = _start_pos()
     try:
         import webview
