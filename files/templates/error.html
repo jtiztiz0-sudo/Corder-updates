@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="card" style="max-width:620px;margin:40px auto;text-align:center">
+  <div style="font-size:38px;line-height:1">⚠️</div>
+  <h1 style="margin:10px 0 6px">Something went wrong there</h1>
+  <p class="muted">Nothing you typed has been lost — everything already saved
+     is still safe. Go back and try again.</p>
+  <p class="muted" style="font-size:13px">
+     If it keeps happening, press the button below and email me the file it
+     makes. It tells me what broke. <strong>It does not contain any of your
+     records.</strong></p>
+  <p class="muted" style="font-size:12px">Reference: {{ ref }}</p>
+  <div style="margin-top:16px;display:flex;gap:10px;justify-content:center">
+    <a class="btn" href="/">Back to the dashboard</a>
+    <button type="button" class="btn ghost" id="reportBtn">Make a problem report</button>
+  </div>
+  <p class="muted" id="reportNote" style="font-size:13px;margin-top:12px"></p>
+</div>
+<script>
+document.getElementById("reportBtn").addEventListener("click", function () {
+  var b = this, note = document.getElementById("reportNote");
+  b.disabled = true; note.textContent = "Making it…";
+  fetch("/problem-report", {method: "POST"})
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+      b.disabled = false;
+      // last path segment, without writing a backslash -- this string has to
+      // survive appgen's own quoting as well as the browser's
+      var f = d.file || "", cut = Math.max(f.lastIndexOf("/"),
+                                           f.lastIndexOf(String.fromCharCode(92)));
+      note.textContent = d.ok
+        ? "Saved to your Desktop: " + f.slice(cut + 1) + " — email me that file."
+        : "Couldn't make it: " + (d.error || "unknown problem");
+    })
+    .catch(function () { b.disabled = false; note.textContent = "Couldn't make it."; });
+});
+</script>
+{% endblock %}

@@ -22,6 +22,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import db
 import modules
+import diagnostics
 
 app = Flask(__name__)
 app.secret_key = "local-desktop-app"
@@ -30,6 +31,46 @@ app.secret_key = "local-desktop-app"
 app.config["TEMPLATES_AUTO_RELOAD"] = True
 
 db.init_db()
+
+
+# Nothing here has a console, so an unhandled error would otherwise vanish
+# without trace and leave "it stopped working" as the only evidence.
+@app.errorhandler(Exception)
+def _record_and_reraise(exc):
+    from werkzeug.exceptions import HTTPException
+    if isinstance(exc, HTTPException):
+        return exc                      # a 404 is not a fault worth logging
+    diagnostics.log_exception(exc, request.path if request else "")
+    return render_template("error.html", ref=datetime.now().strftime("%d %b %H:%M")), 500
+
+
+def _installed_version() -> str:
+    """Engine and config version, for the line below."""
+    def read(name):
+        try:
+            with open(os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                   name), encoding="utf-8") as fh:
+                return fh.read().strip() or "0"
+        except OSError:
+            return "0"
+    return "%s (config %s)" % (read("version.txt"), read("app_version.txt"))
+
+
+# One line every time it opens, so "has she actually run it since I sent that
+# fix?" has an answer -- and a crash on startup shows up as a start with
+# nothing after it.
+diagnostics.log("start", "", "version %s" % _installed_version())
+
+
+@app.route("/problem-report", methods=["POST"])
+def problem_report():
+    """Zip the logs onto their Desktop so they can email it over. Their
+    records are not in it -- see diagnostics.export."""
+    try:
+        return {"ok": True, "file": diagnostics.export()}
+    except Exception as exc:
+        diagnostics.log_exception(exc, "/problem-report")
+        return {"ok": False, "error": str(exc)}, 500
 
 
 @app.template_filter("shortdate")

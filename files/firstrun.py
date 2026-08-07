@@ -30,6 +30,8 @@ import subprocess
 # Set on the copy we relaunch, so an install can never trigger another one.
 SKIP_ENV = "APP_SKIP_INSTALL"
 CREATE_NO_WINDOW = 0x08000000
+IS_MAC = sys.platform == "darwin"
+IS_WINDOWS = os.name == "nt"
 
 
 def _slug(text: str) -> str:
@@ -48,6 +50,11 @@ def folder_name(app_name: str, app_id: str = "") -> str:
 
 
 def install_home(app_name: str, app_id: str = "") -> str:
+    if IS_MAC:
+        # ~/Applications is the per-user apps folder -- no admin rights, and
+        # it survives an OS upgrade. /Applications would need a password.
+        return os.path.join(os.path.expanduser("~"), "Applications",
+                            folder_name(app_name, app_id))
     base = os.environ.get("LOCALAPPDATA") or os.path.expanduser("~")
     return os.path.join(base, "Programs", folder_name(app_name, app_id))
 
@@ -99,9 +106,95 @@ foreach ($dir in $targets) {
 """
 
 
+_MAC_LAUNCHER = """#!/bin/sh
+cd "%(home)s" || exit 1
+if [ -x "runtime-mac/bin/python3" ]; then
+  exec "runtime-mac/bin/python3" desktop.py
+fi
+if [ -x "runtime/bin/python3" ]; then
+  exec "runtime/bin/python3" desktop.py
+fi
+exec python3 desktop.py
+"""
+
+_MAC_PLIST = """<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+ "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>CFBundleName</key><string>%(name)s</string>
+  <key>CFBundleDisplayName</key><string>%(name)s</string>
+  <key>CFBundleIdentifier</key><string>com.corder.%(slug)s</string>
+  <key>CFBundleExecutable</key><string>%(exe)s</string>
+  <key>CFBundlePackageType</key><string>APPL</string>
+  <key>CFBundleVersion</key><string>1.0</string>
+  <key>CFBundleShortVersionString</key><string>1.0</string>
+  <key>LSMinimumSystemVersion</key><string>11.0</string>
+  <key>NSHighResolutionCapable</key><true/>
+</dict>
+</plist>
+"""
+
+
+def _mac_shortcuts(home: str, app_name: str) -> list:
+    """A real .app bundle in ~/Applications, so it turns up in Launchpad and
+    the Dock like anything else, plus an alias on the Desktop.
+
+    A .app is only a folder with a known shape:
+        <Name>.app/Contents/Info.plist
+        <Name>.app/Contents/MacOS/<exe>     a shell script, marked executable
+
+    The plain OPEN-THE-APP.command inside the app folder still works and is
+    the fallback if anything here fails -- nothing depends on the bundle.
+
+    Double quotes on this docstring are deliberate: the whole file is embedded
+    in appgen.py inside a triple-single-quoted literal, so a triple single
+    quote anywhere in here would close it early.
+    """
+    made = []
+    safe = re.sub(r"[/:]", "", app_name or "App").strip() or "App"
+    apps = os.path.join(os.path.expanduser("~"), "Applications")
+    bundle = os.path.join(apps, safe + ".app")
+    macos = os.path.join(bundle, "Contents", "MacOS")
+    exe_name = "run"
+    try:
+        os.makedirs(macos, exist_ok=True)
+        os.makedirs(os.path.join(bundle, "Contents", "Resources"), exist_ok=True)
+        with open(os.path.join(bundle, "Contents", "Info.plist"), "w",
+                  encoding="utf-8") as fh:
+            fh.write(_MAC_PLIST % {"name": safe, "exe": exe_name,
+                                   "slug": _slug(app_name) or "app"})
+        launcher = os.path.join(macos, exe_name)
+        with open(launcher, "w", encoding="utf-8", newline="\n") as fh:
+            fh.write(_MAC_LAUNCHER % {"home": home.replace('"', '\\"')})
+        os.chmod(launcher, 0o755)
+        made.append(bundle)
+    except OSError:
+        return made
+
+    # an alias on the Desktop, the same convenience the Windows copy gets
+    try:
+        desktop = os.path.join(os.path.expanduser("~"), "Desktop")
+        if os.path.isdir(desktop):
+            link = os.path.join(desktop, safe + ".app")
+            if os.path.islink(link) or os.path.exists(link):
+                if os.path.islink(link):
+                    os.unlink(link)
+            if not os.path.exists(link):
+                os.symlink(bundle, link)
+                made.append(link)
+    except OSError:
+        pass
+    return made
+
+
 def make_shortcuts(home: str, app_name: str) -> list:
     """Desktop + Start menu. Points at the app's own pythonw, not the .bat --
     a .bat shortcut flashes a black console box open every single time."""
+    if IS_MAC:
+        return _mac_shortcuts(home, app_name)
+    if not IS_WINDOWS:
+        return []
     exe = os.path.join(home, "runtime", "pythonw.exe")
     if os.path.isfile(exe):
         args = '"%s"' % os.path.join(home, "desktop.py")
@@ -152,7 +245,7 @@ def _tidy_old_shortcuts(current_name: str, home: str) -> None:
 def ensure_installed(app_dir: str, app_name: str, app_id: str = ""):
     """Returns the folder the app should actually be running from, or None if
     that's already here."""
-    if os.environ.get(SKIP_ENV) or os.name != "nt":
+    if os.environ.get(SKIP_ENV) or not (IS_WINDOWS or IS_MAC):
         return None
     # Never install one of the developer's own copies. The master under
     # generated/ and the throwaway under sandbox/ are meant to run exactly
@@ -195,19 +288,39 @@ def ensure_installed(app_dir: str, app_name: str, app_id: str = ""):
                         ignore=shutil.ignore_patterns("__pycache__", "backup", "*.pyc"))
     except OSError:
         return None                          # couldn't install -- run in place
+    # copytree keeps the mode bits, but a copy that came off a Windows-built
+    # zip may never have had them -- make sure the launcher can still be run.
+    if not IS_WINDOWS:
+        for rel in ("OPEN-THE-APP.command",
+                    os.path.join("runtime-mac", "bin", "python3"),
+                    os.path.join("runtime", "bin", "python3")):
+            p = os.path.join(home, rel)
+            if os.path.exists(p):
+                try:
+                    os.chmod(p, os.stat(p).st_mode | 0o111)
+                except OSError:
+                    pass
     make_shortcuts(home, app_name)
     return home
 
 
 def relaunch(home: str) -> bool:
-    exe = os.path.join(home, "runtime", "pythonw.exe")
-    if not os.path.isfile(exe):
-        exe = sys.executable
+    if IS_MAC:
+        exe = os.path.join(home, "runtime-mac", "bin", "python3")
+        if not os.path.isfile(exe):
+            exe = os.path.join(home, "runtime", "bin", "python3")
+        if not os.path.isfile(exe):
+            exe = sys.executable
+    else:
+        exe = os.path.join(home, "runtime", "pythonw.exe")
+        if not os.path.isfile(exe):
+            exe = sys.executable
     env = os.environ.copy()
     env[SKIP_ENV] = "1"
+    kw = {"creationflags": CREATE_NO_WINDOW} if IS_WINDOWS else {}
     try:
         subprocess.Popen([exe, os.path.join(home, "desktop.py")],
-                         cwd=home, env=env, creationflags=CREATE_NO_WINDOW)
+                         cwd=home, env=env, **kw)
         return True
     except OSError:
         return False

@@ -27,7 +27,7 @@ BUSINESS = {'name': 'T-Town Closet',
  'tagline': 'it needs to track once a rental is placed and IF it requires shipping. '
             'automatically make a shipping label  the cheapest option',
  'theme': {},
- 'generated': '2026-08-06 19:18'}
+ 'generated': '2026-08-06 22:30'}
 
 MODULES = [{'key': 'rentals',
   'label': 'Rentals',
