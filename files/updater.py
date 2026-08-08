@@ -132,7 +132,7 @@ def _my_entry(manifest):
 
 
 def _get(url: str) -> bytes:
-    req = urllib.request.Request(url, headers={"User-Agent": "corder-app-updater"})
+    req = urllib.request.Request(url, headers={"User-Agent": "jts-app-updater"})
     with urllib.request.urlopen(req, timeout=CONNECT_TIMEOUT) as resp:
         data = resp.read(MAX_BYTES + 1)
     if len(data) > MAX_BYTES:

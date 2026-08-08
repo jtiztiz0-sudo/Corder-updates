@@ -54,6 +54,6 @@ echo.
 echo This app could not start because Python is not on this computer
 echo and this copy was delivered without its own runtime folder.
 echo.
-echo Contact Corder and ask for the bundled version.
+echo Contact JTS and ask for the bundled version.
 echo.
 pause

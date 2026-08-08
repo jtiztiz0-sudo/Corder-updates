@@ -1,6 +1,6 @@
 {
-  "version": 18,
-  "published": "2026-08-06 22:47",
+  "version": 19,
+  "published": "2026-08-07 19:19",
   "files": {
     "app.py": {
       "sha256": "03c2d828828242c993d422226f0205528b2abe388f1dc77af75d863adfa1cd32",
@@ -15,24 +15,24 @@
       "size": 4357
     },
     "firstrun.py": {
-      "sha256": "237189b94d6f1c1e28cc34bda0f7a8659b37f8b959bac3c6e2dbdb866456465a",
-      "size": 13388
+      "sha256": "a7e676048aa409ef330821aec003e82158bccba38e5c859c6cfcda724686d97d",
+      "size": 13385
     },
     "diagnostics.py": {
       "sha256": "9648e71fa1f43976f91fc41dfa1d838ff224ade2ab18c1e030243d7309acf22a",
       "size": 3703
     },
     "updater.py": {
-      "sha256": "1338acea266febd6b9894e9da0fef3eff021d29a42fc9c80e652a601c18ec541",
-      "size": 11723
+      "sha256": "f66ccd07064b3384780379957e7f794119629c653d120447c6f3760a37800b7d",
+      "size": 11720
     },
     "OPEN-THE-APP.bat": {
-      "sha256": "e29043cdf472fdb66bdde75b19d7a0f21125afb6ced277dc8b14ccfcb0e33e61",
-      "size": 1885
+      "sha256": "d9199656c78e38a8de8419fa1edd4c208fb871ca27c5eca030767b42a9b509bb",
+      "size": 1882
     },
     "OPEN-THE-APP.command": {
-      "sha256": "8d64fb3c6c9ecf5e29afc49879ff30dbfe8aa44087a356e2216b7be872769dee",
-      "size": 1944
+      "sha256": "89157e17e1a0af8b7700f907c958ba3fd5b1e970b297a959a168035588e73233",
+      "size": 1941
     },
     "templates/base.html": {
       "sha256": "e451a6d40874b274385d0cf912f8929adfc04ba458c4eab8f02b64d89024006f",
@@ -60,7 +60,7 @@
       "version": 1,
       "files": {
         "modules.py": {
-          "sha256": "4b7a786c641b363f12a364c5219a171869d1d4cd350ca9402e54e691a43cbb49",
+          "sha256": "3ba7ce4e72fcbf9f867f726632de7cc1f31ffed157b6546aac3dffe833436cab",
           "size": 5312
         }
       }
@@ -69,7 +69,7 @@
       "version": 1,
       "files": {
         "modules.py": {
-          "sha256": "01618b96e5297a0b3f53f6d41ddeaf7c93952297833a4b6d95848f2bfab985a5",
+          "sha256": "cb561059ba89e465b6d1f7fa24bf5271345b3842cd8d7d2c8112094e7fe35e69",
           "size": 11678
         }
       }

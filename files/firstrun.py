@@ -124,7 +124,7 @@ _MAC_PLIST = """<?xml version="1.0" encoding="UTF-8"?>
 <dict>
   <key>CFBundleName</key><string>%(name)s</string>
   <key>CFBundleDisplayName</key><string>%(name)s</string>
-  <key>CFBundleIdentifier</key><string>com.corder.%(slug)s</string>
+  <key>CFBundleIdentifier</key><string>com.jts.%(slug)s</string>
   <key>CFBundleExecutable</key><string>%(exe)s</string>
   <key>CFBundlePackageType</key><string>APPL</string>
   <key>CFBundleVersion</key><string>1.0</string>

@@ -49,6 +49,6 @@ echo ""
 echo "This app could not start because Python is not on this Mac and this"
 echo "copy was delivered without its own runtime folder."
 echo ""
-echo "Contact Corder and ask for the Mac version."
+echo "Contact JTS and ask for the Mac version."
 echo ""
 read -r _ 2>/dev/null
