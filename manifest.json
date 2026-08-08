@@ -1,6 +1,6 @@
 {
-  "version": 19,
-  "published": "2026-08-07 19:19",
+  "version": 20,
+  "published": "2026-08-07 19:32",
   "files": {
     "app.py": {
       "sha256": "03c2d828828242c993d422226f0205528b2abe388f1dc77af75d863adfa1cd32",
@@ -60,7 +60,7 @@
       "version": 1,
       "files": {
         "modules.py": {
-          "sha256": "3ba7ce4e72fcbf9f867f726632de7cc1f31ffed157b6546aac3dffe833436cab",
+          "sha256": "1fa29d09a66c92c9c6e0528b33203afc30cdf18da5aa9e5e105a1ae1e956daa5",
           "size": 5312
         }
       }
@@ -69,7 +69,7 @@
       "version": 1,
       "files": {
         "modules.py": {
-          "sha256": "cb561059ba89e465b6d1f7fa24bf5271345b3842cd8d7d2c8112094e7fe35e69",
+          "sha256": "c3ff328876523ed3d8d1e2c450ec15705bc0d1522c9f4ca89606f509a2a952d9",
           "size": 11678
         }
       }
