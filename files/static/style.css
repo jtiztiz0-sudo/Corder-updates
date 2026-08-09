@@ -23,7 +23,11 @@ header{display:flex;align-items:center;gap:22px;background:var(--surface);
   border-bottom:1px solid var(--line);padding:0 22px;height:56px;
   position:sticky;top:0;z-index:5}
 .brand a{font-size:18px;font-weight:600;color:var(--ink);text-decoration:none;
-  white-space:nowrap}
+  white-space:nowrap;display:flex;align-items:center;gap:9px}
+/* their own logo, sat next to the name. Height-capped and width:auto so a wide
+   logo and a square one both come out the same visual size; object-fit keeps
+   it from being squashed whatever shape they send. */
+.brand-logo{height:28px;width:auto;max-width:150px;object-fit:contain;display:block}
 nav{display:flex;gap:4px;background:var(--bg);border-radius:10px;padding:4px;
   overflow-x:auto}
 nav a{color:var(--muted);text-decoration:none;font-weight:600;font-size:13px;
