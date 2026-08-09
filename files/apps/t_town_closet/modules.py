@@ -28,7 +28,7 @@ BUSINESS = {'name': 'T-Town Closet',
             'automatically make a shipping label  the cheapest option',
  'logo': False,
  'theme': {},
- 'generated': '2026-08-09 13:47'}
+ 'generated': '2026-08-09 13:50'}
 
 MODULES = [{'key': 'rentals',
   'label': 'Rentals',
