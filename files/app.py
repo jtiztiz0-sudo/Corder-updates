@@ -14,9 +14,10 @@ from __future__ import annotations
 
 import os
 import sys
+import secrets
 from datetime import date, datetime, timedelta
 
-from flask import Flask, render_template, request, abort
+from flask import Flask, render_template, request, abort, Response
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -140,7 +141,159 @@ def _clean(field: dict, value):
             return None
     if field["type"] == "check":
         return 1 if value in (True, 1, "1", "true", "on") else 0
+    if field["type"] == "photo":
+        # A photo column holds a filename WE chose, written only by the upload
+        # route below. Whatever arrived on the ordinary form is ignored, so
+        # nobody can point a record at a file by posting its name.
+        return ""
     return ("" if value is None else str(value)).strip()
+
+
+# --- photos -----------------------------------------------------------------
+# A photo field's COLUMN holds a filename. The picture itself lives in
+# data/photos/ on this machine, and never goes in the database: a few hundred
+# photos would make app.db hundreds of times larger than the records
+# themselves, and every backup would then carry every picture again. Keeping
+# them in their own folder also means they can be deliberately LEFT OUT of a
+# backup -- they are the one thing here that is big.
+#
+# Nothing about an uploaded file is trusted. The name they came with is
+# discarded and we choose our own; the type is decided by the first few BYTES
+# rather than the extension; and serving looks the filename up in the
+# database, never taking a path from the URL.
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+PHOTO_DIR = os.path.join(HERE, "data", "photos")
+MAX_PHOTO_BYTES = 12 * 1024 * 1024
+
+_MAGIC = [(b"\xff\xd8\xff", "jpg", "image/jpeg"),
+          (b"\x89PNG\r\n\x1a\n", "png", "image/png"),
+          (b"GIF87a", "gif", "image/gif"),
+          (b"GIF89a", "gif", "image/gif")]
+
+
+def _sniff(blob: bytes):
+    """(extension, content type) for a real picture, else None. An extension is
+    a claim; this is evidence. WebP needs two separate checks -- "RIFF", then
+    "WEBP" four bytes later -- so it can't live in the table above."""
+    for magic, ext, ctype in _MAGIC:
+        if blob.startswith(magic):
+            return ext, ctype
+    if blob[:4] == b"RIFF" and blob[8:12] == b"WEBP":
+        return "webp", "image/webp"
+    return None
+
+
+def _photo_field(m: dict, name: str):
+    """The named field, but only if it really is a photo box on this tab."""
+    f = next((x for x in m["fields"] if x["name"] == name), None)
+    return f if f is not None and f["type"] == "photo" else None
+
+
+def _photo_path(m: dict, stored: str) -> str:
+    """Where a stored filename lives. basename() is the guard -- the value came
+    out of our own database, but a bare name can never climb out of the folder
+    even if one day something else writes to that column."""
+    return os.path.join(PHOTO_DIR, m["table"], os.path.basename(stored))
+
+
+def _drop_photos(m: dict, row) -> None:
+    """Delete every picture belonging to a row, so a deleted record doesn't
+    leave its photos behind forever."""
+    for f in m["fields"]:
+        if f["type"] != "photo":
+            continue
+        stored = (row[f["name"]] if row else "") or ""
+        if stored:
+            try:
+                os.remove(_photo_path(m, stored))
+            except OSError:
+                pass
+
+
+def _row_or_none(m: dict, row_id: int):
+    return db.query_one("SELECT * FROM %s WHERE id = ?" % m["table"], (row_id,))
+
+
+@app.route("/m/<key>/<int:row_id>/photo/<field>", methods=["POST"])
+def photo_upload(key: str, row_id: int, field: str):
+    m = _module_or_404(key)
+    if _photo_field(m, field) is None:
+        return {"ok": False, "error": "unknown field"}, 400
+    row = _row_or_none(m, row_id)
+    if row is None:
+        return {"ok": False, "error": "no such record"}, 404
+
+    upload = request.files.get("photo")
+    if upload is None:
+        return {"ok": False, "error": "no picture was sent"}, 400
+    # read one byte past the limit, so "too big" is caught without pulling a
+    # huge file into memory first
+    blob = upload.read(MAX_PHOTO_BYTES + 1)
+    if len(blob) > MAX_PHOTO_BYTES:
+        return {"ok": False, "error": "that picture is too big (12 MB limit)"}, 400
+    kind = _sniff(blob)
+    if kind is None:
+        return {"ok": False, "error": "that file isn't a picture"}, 400
+
+    folder = os.path.join(PHOTO_DIR, m["table"])
+    os.makedirs(folder, exist_ok=True)
+    name = "%d-%s-%s.%s" % (row_id, field, secrets.token_hex(6), kind[0])
+    with open(os.path.join(folder, name), "wb") as fh:
+        fh.write(blob)
+
+    old = row[field] or ""
+    db.update(m["table"], row_id, **{field: name})
+    # the old one only goes once the new one is safely written and recorded
+    if old and old != name:
+        try:
+            os.remove(_photo_path(m, old))
+        except OSError:
+            pass
+    return {"ok": True, "file": name}
+
+
+@app.route("/m/<key>/<int:row_id>/photo/<field>/remove", methods=["POST"])
+def photo_delete(key: str, row_id: int, field: str):
+    m = _module_or_404(key)
+    if _photo_field(m, field) is None:
+        return {"ok": False, "error": "unknown field"}, 400
+    row = _row_or_none(m, row_id)
+    if row is None:
+        return {"ok": False, "error": "no such record"}, 404
+    stored = row[field] or ""
+    db.update(m["table"], row_id, **{field: ""})
+    if stored:
+        try:
+            os.remove(_photo_path(m, stored))
+        except OSError:
+            pass
+    return {"ok": True}
+
+
+@app.route("/photo/<key>/<int:row_id>/<field>")
+def photo_show(key: str, row_id: int, field: str):
+    m = _module_or_404(key)
+    if _photo_field(m, field) is None:
+        abort(404)
+    row = _row_or_none(m, row_id)
+    stored = (row[field] if row else "") or ""
+    if not stored:
+        abort(404)
+    try:
+        with open(_photo_path(m, stored), "rb") as fh:
+            blob = fh.read()
+    except OSError:
+        abort(404)
+    kind = _sniff(blob)
+    if kind is None:                        # not a picture any more -- refuse
+        abort(404)
+    resp = Response(blob, mimetype=kind[1])
+    resp.headers["Content-Disposition"] = "inline"
+    # the type is worked out from the bytes above; stop the browser second-
+    # guessing it from anything else
+    resp.headers["X-Content-Type-Options"] = "nosniff"
+    return resp
 
 
 def _sum(m: dict) -> float:
@@ -280,6 +433,10 @@ def record_update(key: str):
     field = next((f for f in m["fields"] if f["name"] == name), None)
     if field is None:                       # not a real column on this tab
         return {"ok": False, "error": "unknown field"}, 400
+    if field["type"] == "photo":
+        # photo columns are written only by the upload/remove routes. Allowing
+        # them here would blank the column and strand the file on disk.
+        return {"ok": False, "error": "use the photo upload"}, 400
     try:
         row_id = int(payload.get("id"))
     except (TypeError, ValueError):
@@ -296,6 +453,8 @@ def record_delete(key: str):
         row_id = int(payload.get("id"))
     except (TypeError, ValueError):
         return {"ok": False, "error": "bad id"}, 400
+    # pictures first, while the row can still tell us which ones are its own
+    _drop_photos(m, _row_or_none(m, row_id))
     db.delete(m["table"], row_id)
     return {"ok": True}
 

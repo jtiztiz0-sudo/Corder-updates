@@ -139,6 +139,25 @@ button:hover{filter:brightness(1.08)}
 .xbtn{background:none;color:var(--muted);border:0;font-size:14px;padding:4px 6px;
   cursor:pointer;opacity:.5}
 .xbtn:hover{opacity:1;color:var(--red);filter:none}
+/* --- photos ---
+   Two global rules have to be undone here, both keyed on the ELEMENT rather
+   than a class so a photo box added to any tab later is covered too:
+   `input{width:100%}` stretches a file picker across its whole row, and
+   `button{background:var(--blue);padding:9px 16px}` turns a bare x into a big
+   blue block sitting on top of the text. */
+input[type=file]{width:auto;padding:4px 0;border:0;background:none;font-size:12px}
+.photo-cell{white-space:nowrap;width:96px}
+.thumb{width:64px;height:48px;object-fit:cover;border-radius:5px;
+  border:1px solid var(--line);vertical-align:middle;display:inline-block}
+.photo-x{background:none;border:0;padding:2px 4px;margin-left:2px;font-size:12px;
+  color:var(--muted);cursor:pointer;opacity:.5}
+.photo-x:hover{opacity:1;color:var(--red)}
+/* a label, not a button -- clicking it opens the file picker via the hidden
+   input inside, so there is nothing extra to wire up in JS */
+.photo-add{display:inline-block;cursor:pointer;font-size:12px;font-weight:600;
+  color:var(--muted);border:1px dashed var(--line);border-radius:5px;
+  padding:5px 9px}
+.photo-add:hover{color:var(--text);border-color:var(--muted)}
 .tag{display:inline-block;background:var(--surface-2);border-radius:20px;
   padding:3px 10px;font-size:12px;font-weight:600;white-space:nowrap}
 .total-bar{display:flex;justify-content:flex-end;gap:8px;padding-top:12px;

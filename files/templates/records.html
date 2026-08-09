@@ -17,6 +17,10 @@
     </select>
   {%- elif f.html == 'check' -%}
     <input type="checkbox" class="{{ cls }} chk" data-field="{{ f.name }}" {{ 'checked' if value }}>
+  {%- elif f.html == 'file' -%}
+    {#- the picture can only be attached once the row exists, so this one is
+        sent after the add succeeds rather than with it -#}
+    <input type="file" accept="image/*" class="{{ cls }}" data-field="{{ f.name }}" data-photo>
   {%- else -%}
     <input type="{{ f.html }}" class="{{ cls }}" data-field="{{ f.name }}"
            {% if f.step %}step="{{ f.step }}"{% endif %}
@@ -73,6 +77,22 @@
             m.archive.done_label if done else m.archive.open_label }}</span></td>
           {% elif f.owner_only %}
           <td class="ro-cell">{{ r[f.name]|shortdate if f.name.endswith('_at') else (r[f.name] if r[f.name] is not none else '') }}</td>
+          {% elif f.type == 'photo' %}
+          {#- handled here rather than in the macro because it needs the row's
+              id to build its own address, and the macro only gets the field -#}
+          <td class="photo-cell">
+            {% if r[f.name] %}
+            {% set src = url_for('photo_show', key=m.key, row_id=r['id'], field=f.name) %}
+            <a href="{{ src }}" target="_blank" title="See it full size">
+              <img class="thumb" src="{{ src }}" alt="{{ f.label }}"></a>
+            <button type="button" class="photo-x" data-photo-del
+                    data-field="{{ f.name }}" title="Remove picture">✕</button>
+            {% else %}
+            <label class="photo-add">+ photo
+              <input type="file" accept="image/*" data-photo-row
+                     data-field="{{ f.name }}" hidden></label>
+            {% endif %}
+          </td>
           {% else %}
           <td>{{ field_input(f, r[f.name], 'cell', false) }}</td>
           {% endif %}
@@ -108,6 +128,15 @@
           {% for f in m.fields %}
           {% if f.is_status and m.archive %}
           <td class="ro-cell"><span class="wl-pill done">{{ m.archive.done_label }}</span></td>
+          {% elif f.type == 'photo' %}
+          {#- read-only here: History is a record of what happened, so the
+              picture is shown but there is nothing to change -#}
+          <td class="ro-cell photo-cell">
+            {% if r[f.name] %}
+            {% set src = url_for('photo_show', key=m.key, row_id=r['id'], field=f.name) %}
+            <a href="{{ src }}" target="_blank"><img class="thumb" src="{{ src }}" alt=""></a>
+            {% endif %}
+          </td>
           {% else %}
           <td class="ro-cell">{{ r[f.name]|shortdate if f.name.endswith('_at') else (r[f.name] if r[f.name] is not none else '') }}</td>
           {% endif %}
@@ -166,17 +195,55 @@
   function collectNew() {
     var body = {};
     document.querySelectorAll(".add-in").forEach(function (el) {
+      // a picture is filed under the record's id, which doesn't exist yet --
+      // it goes up separately once the row has been created
+      if (el.type === "file") return;
       body[el.dataset.field] = el.type === "checkbox" ? el.checked : el.value;
     });
     return body;
   }
+
+  // ---- photos ----
+  function sendPhoto(id, field, file) {
+    var fd = new FormData();
+    fd.append("photo", file);
+    return fetch("/m/" + KEY + "/" + id + "/photo/" + field,
+                 {method: "POST", body: fd})
+      .then(function (r) { return r.json(); })
+      .catch(function () { return {ok: false, error: "That picture didn't upload."}; });
+  }
+  // one at a time on purpose -- gentler on a slow connection than firing
+  // several at once, and the first failure is the one worth reporting
+  function sendNewPhotos(id) {
+    var picks = [];
+    document.querySelectorAll(".add-in[data-photo]").forEach(function (el) {
+      if (el.files && el.files[0]) picks.push([el.dataset.field, el.files[0]]);
+    });
+    return new Promise(function (done) {
+      (function next(i, err) {
+        if (i >= picks.length) { done(err); return; }
+        sendPhoto(id, picks[i][0], picks[i][1]).then(function (d) {
+          next(i + 1, err || (d.ok ? "" : d.error));
+        });
+      })(0, "");
+    });
+  }
+
   document.getElementById("addBtn").addEventListener("click", function () {
     addErr.textContent = "";
     APP.post("/m/" + KEY + "/add", collectNew()).then(function (d) {
       if (!d.ok) { addErr.textContent = d.error || "Couldn't add that."; return; }
-      // reload so the new row lands in the right sort position with the
-      // right formatting -- cheaper than rebuilding it correctly in JS
-      window.location.reload();
+      sendNewPhotos(d.id).then(function (err) {
+        // the record saved either way, so say so rather than reloading and
+        // throwing the message away
+        if (err) {
+          addErr.textContent = err + " The rest was saved — add the picture from its row.";
+          return;
+        }
+        // reload so the new row lands in the right sort position with the
+        // right formatting -- cheaper than rebuilding it correctly in JS
+        window.location.reload();
+      });
     });
   });
   // Enter in any single-line add field = Add
@@ -196,6 +263,15 @@
   }
   rowsEl.addEventListener("change", function (e) {
     var el = e.target;
+    if (el.hasAttribute("data-photo-row")) {
+      if (!el.files || !el.files[0]) return;
+      var row = el.closest("tr");
+      sendPhoto(row.dataset.id, el.dataset.field, el.files[0]).then(function (d) {
+        if (d.ok) window.location.reload();
+        else alert(d.error || "That picture didn't upload.");
+      });
+      return;
+    }
     if (!el.dataset.field) return;
     save(el);
     if (el.hasAttribute("data-status")) paintStatus(el);
@@ -206,6 +282,17 @@
   }, true);
   rowsEl.addEventListener("input", function (e) {
     if (e.target.tagName === "TEXTAREA") grow(e.target);
+  });
+
+  // ---- remove a picture (the record itself stays) ----
+  rowsEl.addEventListener("click", function (e) {
+    if (!e.target.matches("[data-photo-del]")) return;
+    var row = e.target.closest("tr");
+    if (!confirm("Remove this picture?")) return;
+    APP.post("/m/" + KEY + "/" + row.dataset.id + "/photo/"
+             + e.target.dataset.field + "/remove", {}).then(function (d) {
+      if (d.ok) window.location.reload();
+    });
   });
 
   // ---- delete ----
