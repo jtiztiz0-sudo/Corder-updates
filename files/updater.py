@@ -243,6 +243,18 @@ def apply(manifest) -> bool:
                 shutil.copy2(dest, keep)
             os.makedirs(os.path.dirname(dest), exist_ok=True)
             shutil.copy2(hold, dest)
+            # copy2 carries the staged file's own mode across, and that was
+            # made by tempfile -- 0644, no execute bit. On a Mac a launcher
+            # that arrives in an update would come out unrunnable: the .app
+            # icon calls python directly and is fine, but the folder's own
+            # OPEN-THE-APP.command is the way back in when the icon is broken,
+            # which is exactly when you need it. Windows has no execute bit,
+            # so this is a no-op there.
+            if dest.endswith((".command", ".sh")):
+                try:
+                    os.chmod(dest, 0o755)
+                except OSError:
+                    pass
 
         if engine_new:
             with open(VERSION_FILE, "w", encoding="utf-8") as fh:

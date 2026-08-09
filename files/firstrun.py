@@ -107,13 +107,20 @@ foreach ($dir in $targets) {
 
 
 _MAC_LAUNCHER = """#!/bin/sh
+# This is what the Dock/Applications icon runs -- the everyday way in. It calls
+# the bundled python directly, so it never depends on the .command launcher.
+# -f rather than -x, and put a lost execute bit back: see the same note in
+# OPEN-THE-APP.command. Falling through to a system python3 gives an import
+# error later instead of a working app.
 cd "%(home)s" || exit 1
-if [ -x "runtime-mac/bin/python3" ]; then
-  exec "runtime-mac/bin/python3" desktop.py
-fi
-if [ -x "runtime/bin/python3" ]; then
-  exec "runtime/bin/python3" desktop.py
-fi
+for py in "runtime-mac/bin/python3" "runtime/bin/python3"; do
+  if [ -f "$py" ]; then
+    [ -x "$py" ] || chmod +x "$py" 2>/dev/null
+    if [ -x "$py" ]; then
+      exec "$py" desktop.py
+    fi
+  fi
+done
 exec python3 desktop.py
 """
 
@@ -242,6 +249,40 @@ def _tidy_old_shortcuts(current_name: str, home: str) -> None:
         pass
 
 
+def _unmark(folder: str) -> int:
+    """Strip the "came from the internet" tag off the installed copy.
+
+    Windows tags every file that arrives from the web, and copying a file
+    copies the tag with it -- so the install inherited it from the download.
+    Smart App Control then refuses to let the shortcut run the app: a signed
+    interpreter being pointed at a marked script is exactly what it stops.
+
+    Once the app is in Programs it IS a local program, and the person already
+    decided to run it. The tag is an NTFS side-stream, so it deletes like a
+    file. Windows only; every failure is ignored.
+    """
+    if IS_MAC:
+        # macOS calls it com.apple.quarantine, and Gatekeeper enforces it the
+        # same way -- the installed copy inherits it from the download.
+        try:
+            subprocess.run(["xattr", "-dr", "com.apple.quarantine", folder],
+                           capture_output=True, timeout=180)
+        except Exception:
+            pass
+        return 0
+    if not IS_WINDOWS:
+        return 0
+    cleared = 0
+    for root, _dirs, files in os.walk(folder):
+        for f in files:
+            try:
+                os.remove(os.path.join(root, f) + ":Zone.Identifier")
+                cleared += 1
+            except OSError:
+                pass                     # not tagged, or in use -- both fine
+    return cleared
+
+
 def ensure_installed(app_dir: str, app_name: str, app_id: str = ""):
     """Returns the folder the app should actually be running from, or None if
     that's already here."""
@@ -263,6 +304,7 @@ def ensure_installed(app_dir: str, app_name: str, app_id: str = ""):
     # Already installed: hand over to that copy. Never overwrite it -- their
     # records are in there.
     if os.path.isfile(os.path.join(home, "desktop.py")):
+        _unmark(home)                    # an install made before this fix
         # Rename the icon if the business has been renamed. The copy we're
         # about to hand over to runs with setup skipped, so if this doesn't
         # happen here it never happens, and the customer keeps clicking an
@@ -288,6 +330,7 @@ def ensure_installed(app_dir: str, app_name: str, app_id: str = ""):
                         ignore=shutil.ignore_patterns("__pycache__", "backup", "*.pyc"))
     except OSError:
         return None                          # couldn't install -- run in place
+    _unmark(home)
     # copytree keeps the mode bits, but a copy that came off a Windows-built
     # zip may never have had them -- make sure the launcher can still be run.
     if not IS_WINDOWS:

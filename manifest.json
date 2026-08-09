@@ -1,6 +1,6 @@
 {
-  "version": 20,
-  "published": "2026-08-07 19:32",
+  "version": 21,
+  "published": "2026-08-08 22:36",
   "files": {
     "app.py": {
       "sha256": "03c2d828828242c993d422226f0205528b2abe388f1dc77af75d863adfa1cd32",
@@ -15,24 +15,24 @@
       "size": 4357
     },
     "firstrun.py": {
-      "sha256": "a7e676048aa409ef330821aec003e82158bccba38e5c859c6cfcda724686d97d",
-      "size": 13385
+      "sha256": "71e2e71bc53e75e52ef9c79da6eb8b7d6f2e76628eda86c1d86bae916af9415f",
+      "size": 15226
     },
     "diagnostics.py": {
       "sha256": "9648e71fa1f43976f91fc41dfa1d838ff224ade2ab18c1e030243d7309acf22a",
       "size": 3703
     },
     "updater.py": {
-      "sha256": "f66ccd07064b3384780379957e7f794119629c653d120447c6f3760a37800b7d",
-      "size": 11720
+      "sha256": "d68dd5cb3f6d56f80f27179fac5f6f19a22b0700b1ce90fc93c7149c23a52342",
+      "size": 12390
     },
     "OPEN-THE-APP.bat": {
       "sha256": "d9199656c78e38a8de8419fa1edd4c208fb871ca27c5eca030767b42a9b509bb",
       "size": 1882
     },
     "OPEN-THE-APP.command": {
-      "sha256": "89157e17e1a0af8b7700f907c958ba3fd5b1e970b297a959a168035588e73233",
-      "size": 1941
+      "sha256": "283470dd4cc7dd0cb69431f1f941c3f1bcff1ffcc083904956f09d0e34481c45",
+      "size": 3261
     },
     "templates/base.html": {
       "sha256": "e451a6d40874b274385d0cf912f8929adfc04ba458c4eab8f02b64d89024006f",
@@ -60,7 +60,7 @@
       "version": 1,
       "files": {
         "modules.py": {
-          "sha256": "1fa29d09a66c92c9c6e0528b33203afc30cdf18da5aa9e5e105a1ae1e956daa5",
+          "sha256": "e63fb11fc6e61f843bf16bc90e627cc3b95f08b150a206764fd9a2cede994c96",
           "size": 5312
         }
       }
@@ -69,7 +69,7 @@
       "version": 1,
       "files": {
         "modules.py": {
-          "sha256": "c3ff328876523ed3d8d1e2c450ec15705bc0d1522c9f4ca89606f509a2a952d9",
+          "sha256": "dfcf99f8b7bfcce334c6841a8af7898541eb958d3ea8131c4c544b12b43a0e38",
           "size": 11678
         }
       }
