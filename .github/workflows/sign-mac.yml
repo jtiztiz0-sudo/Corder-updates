@@ -1,0 +1,179 @@
+# Sign and notarise a JTS Mac delivery.
+#
+# Runs on GitHub's own Mac, because Apple only allows signing and notarising
+# on macOS and JT builds on Windows. Free on a public repo.
+#
+# WHAT GOES IN : unsigned/<name>.zip committed to this repo
+# WHAT COMES OUT: a workflow artifact "signed-mac" containing the same zip with
+#                 the .app signed, notarised and stapled.
+#
+# THE RULE THIS MUST NOT BREAK: everything inside the .app is sealed by the
+# signature. The delivered app copies itself OUT to an install folder on first
+# launch and every over-the-air update lands there, never in the bundle. So
+# nothing here should ever be asked to re-sign on a customer's machine.
+
+name: Sign and notarise the Mac app
+
+on:
+  workflow_dispatch:
+    inputs:
+      zip:
+        description: "Path in this repo to the unsigned zip (e.g. unsigned/jackson_s_a_poopy.zip)"
+        required: true
+
+jobs:
+  sign:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Unlock the signing certificate
+        env:
+          P12_BASE64: ${{ secrets.MAC_CERT_P12_BASE64 }}
+          P12_PASSWORD: ${{ secrets.MAC_CERT_PASSWORD }}
+        run: |
+          set -euo pipefail
+          # A throwaway keychain for this run only. Never touches the runner's
+          # login keychain, and the whole VM is destroyed afterwards.
+          KEYCHAIN="$RUNNER_TEMP/signing.keychain-db"
+          PASS="$(uuidgen)"
+          security create-keychain -p "$PASS" "$KEYCHAIN"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN"
+          security unlock-keychain -p "$PASS" "$KEYCHAIN"
+
+          echo "$P12_BASE64" | base64 --decode > "$RUNNER_TEMP/cert.p12"
+          security import "$RUNNER_TEMP/cert.p12" -k "$KEYCHAIN" \
+            -P "$P12_PASSWORD" -T /usr/bin/codesign
+          rm -f "$RUNNER_TEMP/cert.p12"
+
+          # lets codesign use the key without a UI prompt (there is no UI here)
+          security set-key-partition-list -S apple-tool:,apple:,codesign: \
+            -s -k "$PASS" "$KEYCHAIN" > /dev/null
+          security list-keychains -d user -s "$KEYCHAIN" login.keychain-db
+
+          IDENTITY="$(security find-identity -v -p codesigning "$KEYCHAIN" \
+            | grep 'Developer ID Application' | head -1 \
+            | sed -E 's/.*"(.*)"/\1/')"
+          if [ -z "$IDENTITY" ]; then
+            echo "No Developer ID Application identity in the certificate." >&2
+            exit 1
+          fi
+          echo "Signing as: $IDENTITY"
+          echo "IDENTITY=$IDENTITY" >> "$GITHUB_ENV"
+          echo "KEYCHAIN=$KEYCHAIN" >> "$GITHUB_ENV"
+
+      - name: Unpack the delivery
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/work"
+          ditto -x -k "${{ github.event.inputs.zip }}" "$RUNNER_TEMP/work"
+          APP="$(find "$RUNNER_TEMP/work" -maxdepth 2 -name '*.app' -type d | head -1)"
+          if [ -z "$APP" ]; then
+            echo "No .app found in that zip -- was it packaged for Mac?" >&2
+            find "$RUNNER_TEMP/work" -maxdepth 2 >&2
+            exit 1
+          fi
+          echo "Found: $APP"
+          echo "APP=$APP" >> "$GITHUB_ENV"
+
+      - name: Sign everything inside, then the app itself
+        run: |
+          set -euo pipefail
+
+          # CPython uses ctypes/libffi, which needs writable-executable memory.
+          # Without these entitlements the app signs and notarises fine and
+          # then CRASHES on launch -- a failure that only shows up on the
+          # customer's machine, which is the worst place to find it.
+          cat > "$RUNNER_TEMP/entitlements.plist" <<'PLIST'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+           "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>com.apple.security.cs.allow-jit</key><true/>
+            <key>com.apple.security.cs.allow-unsigned-executable-memory</key><true/>
+            <key>com.apple.security.cs.allow-dyld-environment-variables</key><true/>
+            <key>com.apple.security.cs.disable-library-validation</key><true/>
+          </dict>
+          </plist>
+          PLIST
+
+          sign() {
+            codesign --force --timestamp --options runtime \
+              --entitlements "$RUNNER_TEMP/entitlements.plist" \
+              --keychain "$KEYCHAIN" --sign "$IDENTITY" "$1"
+          }
+
+          # Inner code FIRST, outermost LAST: signing the bundle seals whatever
+          # is inside it at that moment, so anything signed afterwards would
+          # invalidate the seal.
+          find "$APP" -type f \( -name '*.dylib' -o -name '*.so' \) -print0 \
+            | while IFS= read -r -d '' f; do sign "$f"; done
+
+          # every Mach-O executable that isn't a library (the interpreter, etc)
+          find "$APP" -type f -perm +111 -print0 \
+            | while IFS= read -r -d '' f; do
+                if file "$f" | grep -q 'Mach-O'; then sign "$f"; fi
+              done
+
+          sign "$APP"
+          codesign --verify --deep --strict --verbose=2 "$APP"
+
+      - name: Ask Apple to check it
+        env:
+          API_KEY: ${{ secrets.MAC_API_KEY_P8 }}
+          KEY_ID: ${{ secrets.MAC_API_KEY_ID }}
+          ISSUER_ID: ${{ secrets.MAC_API_ISSUER_ID }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/keys"
+          printf '%s' "$API_KEY" > "$RUNNER_TEMP/keys/key.p8"
+
+          # notarytool wants an archive, not a folder
+          ditto -c -k --keepParent "$APP" "$RUNNER_TEMP/notarize.zip"
+
+          xcrun notarytool submit "$RUNNER_TEMP/notarize.zip" \
+            --key "$RUNNER_TEMP/keys/key.p8" \
+            --key-id "$KEY_ID" --issuer "$ISSUER_ID" \
+            --wait --timeout 30m
+          rm -rf "$RUNNER_TEMP/keys"
+
+          # Staple the ticket INTO the app, so it opens even with no internet.
+          # Without this macOS has to phone Apple on first launch.
+          xcrun stapler staple "$APP"
+          xcrun stapler validate "$APP"
+
+      - name: Prove a fresh copy would be allowed to run
+        run: |
+          set -euo pipefail
+          # This is the check that actually matters: it is what Gatekeeper
+          # itself will say on the customer's machine.
+          spctl --assess --type execute --verbose=4 "$APP"
+
+      - name: Repack it exactly as it was
+        run: |
+          set -euo pipefail
+          OUT="$RUNNER_TEMP/out"
+          mkdir -p "$OUT"
+          NAME="$(basename '${{ github.event.inputs.zip }}')"
+          # The delivery has exactly one top-level folder. Say so rather than
+          # assuming -- if that ever changes, fail loudly here instead of
+          # shipping a zip with a piece missing.
+          COUNT="$(ls -1 "$RUNNER_TEMP/work" | wc -l | tr -d ' ')"
+          if [ "$COUNT" != "1" ]; then
+            echo "Expected one folder in the delivery, found $COUNT:" >&2
+            ls -1 "$RUNNER_TEMP/work" >&2
+            exit 1
+          fi
+          TOP="$(ls -1 "$RUNNER_TEMP/work")"
+          # ditto keeps the signature, the symlinks and the permission bits.
+          # A plain `zip` would quietly break the bundle.
+          ( cd "$RUNNER_TEMP/work" && ditto -c -k --sequesterRsrc --keepParent \
+              "$TOP" "$OUT/$NAME" )
+          ls -lh "$OUT"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: signed-mac
+          path: ${{ runner.temp }}/out/*.zip
+          retention-days: 7
