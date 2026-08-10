@@ -147,10 +147,28 @@ jobs:
           # notarytool wants an archive, not a folder
           ditto -c -k --keepParent "$APP" "$RUNNER_TEMP/notarize.zip"
 
-          xcrun notarytool submit "$RUNNER_TEMP/notarize.zip" \
-            --key "$RUNNER_TEMP/keys/key.p8" \
-            --key-id "$KEY_ID" --issuer "$ISSUER_ID" \
-            --wait --timeout 30m
+          # Capture the output: when Apple says "Invalid" it does NOT say why
+          # here. The reason is in a separate report fetched by submission id,
+          # and without it you are guessing at which file it objected to.
+          set +e
+          OUT="$(xcrun notarytool submit "$RUNNER_TEMP/notarize.zip" \
+                   --key "$RUNNER_TEMP/keys/key.p8" \
+                   --key-id "$KEY_ID" --issuer "$ISSUER_ID" \
+                   --wait --timeout 30m 2>&1)"
+          RC=$?
+          set -e
+          echo "$OUT"
+          SUB="$(echo "$OUT" | grep -m1 -E '^ *id: ' | awk '{print $2}')"
+
+          if echo "$OUT" | grep -q 'status: Invalid' || [ "$RC" != "0" ]; then
+            echo ""
+            echo "===== WHAT APPLE OBJECTED TO ====="
+            xcrun notarytool log "$SUB" \
+              --key "$RUNNER_TEMP/keys/key.p8" \
+              --key-id "$KEY_ID" --issuer "$ISSUER_ID" || true
+            rm -rf "$RUNNER_TEMP/keys"
+            exit 1
+          fi
           rm -rf "$RUNNER_TEMP/keys"
 
           # Staple the ticket INTO the app, so it opens even with no internet.
