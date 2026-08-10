@@ -42,8 +42,23 @@ jobs:
           security unlock-keychain -p "$PASS" "$KEYCHAIN"
 
           echo "$P12_BASE64" | base64 --decode > "$RUNNER_TEMP/cert.p12"
+
+          # Fingerprint what actually arrived. "MAC verification failed" is
+          # reported for BOTH a wrong password and a certificate macOS cannot
+          # read, so without this you cannot tell which you are looking at.
+          # Neither number reveals anything secret.
+          echo "certificate received: $(wc -c < "$RUNNER_TEMP/cert.p12" | tr -d ' ') bytes"
+          echo "fingerprint         : $(shasum -a 256 "$RUNNER_TEMP/cert.p12" | cut -d' ' -f1)"
+          echo "password length     : ${#P12_PASSWORD} characters"
+
+          # Trim any stray newline or space. GitHub stores a secret exactly as
+          # pasted, and a copy from a text file usually brings a line break
+          # with it -- which is silently the wrong password.
+          PW="$(printf '%s' "$P12_PASSWORD" | tr -d '[:space:]')"
+          echo "password in use     : ${#PW} characters after trimming"
+
           security import "$RUNNER_TEMP/cert.p12" -k "$KEYCHAIN" \
-            -P "$P12_PASSWORD" -T /usr/bin/codesign
+            -P "$PW" -T /usr/bin/codesign
           rm -f "$RUNNER_TEMP/cert.p12"
 
           # lets codesign use the key without a UI prompt (there is no UI here)
