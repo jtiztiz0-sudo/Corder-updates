@@ -122,17 +122,40 @@ jobs:
           # Inner code FIRST, outermost LAST: signing the bundle seals whatever
           # is inside it at that moment, so anything signed afterwards would
           # invalidate the seal.
-          find "$APP" -type f \( -name '*.dylib' -o -name '*.so' \) -print0 \
-            | while IFS= read -r -d '' f; do sign "$f"; done
-
-          # every Mach-O executable that isn't a library (the interpreter, etc)
-          find "$APP" -type f -perm +111 -print0 \
-            | while IFS= read -r -d '' f; do
-                if file "$f" | grep -q 'Mach-O'; then sign "$f"; fi
-              done
+          #
+          # Every file is asked what it IS, rather than filtered on its name or
+          # its permission bits. An earlier version tested `-perm +111` and
+          # silently missed runtime-mac/bin/python3 -- the main interpreter --
+          # which Apple then rejected the whole app for. `file` cannot miss it.
+          #
+          # Process substitution, not a pipe: a piped `while` runs in a subshell
+          # where `set -e` and the counter below would be thrown away, so a
+          # failed signature would pass unnoticed.
+          SIGNED=0
+          while IFS= read -r -d '' f; do
+            if file -b "$f" | grep -q 'Mach-O'; then
+              sign "$f"
+              SIGNED=$((SIGNED + 1))
+            fi
+          done < <(find "$APP" -type f -print0)
+          echo "signed $SIGNED binaries inside the bundle"
+          if [ "$SIGNED" -lt 1 ]; then
+            echo "Nothing was signed -- that cannot be right." >&2
+            exit 1
+          fi
 
           sign "$APP"
           codesign --verify --deep --strict --verbose=2 "$APP"
+
+          # Prove the interpreter itself really carries a signature, a secure
+          # timestamp and the hardened runtime. This is the exact file Apple
+          # complained about, so check it here rather than finding out in a
+          # rejection ten minutes later.
+          PY="$APP/Contents/Resources/app/runtime-mac/bin/python3"
+          if [ -f "$PY" ]; then
+            codesign --verify --strict --verbose=2 "$PY"
+            codesign --display --verbose=4 "$PY" 2>&1 | grep -Ei 'Authority|Timestamp|flags' || true
+          fi
 
       - name: Ask Apple to check it
         env:
