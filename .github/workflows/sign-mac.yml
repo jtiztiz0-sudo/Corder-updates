@@ -252,8 +252,13 @@ jobs:
             echo "The packed app is not executable -- it would not open." >&2
             exit 1
           fi
-          # and the signature must still be intact after the round trip
-          CA="$(dirname "$(dirname "$CL")")"
+          # and the signature must still be intact after the round trip.
+          # Find the bundle by NAME -- walking up from the launcher by counting
+          # directories lands on Contents/ and codesign then says "bundle
+          # format unrecognized", which reads like the app is broken when it is
+          # only the wrong path being checked.
+          CA="$(find "$CHECK" -maxdepth 3 -name '*.app' -type d | head -1)"
+          echo "verifying: $CA"
           codesign --verify --deep --strict --verbose=2 "$CA"
           spctl --assess --type execute --verbose=4 "$CA"
 
