@@ -222,11 +222,40 @@ jobs:
             exit 1
           fi
           TOP="$(ls -1 "$RUNNER_TEMP/work")"
-          # ditto keeps the signature, the symlinks and the permission bits.
-          # A plain `zip` would quietly break the bundle.
+          LAUNCH="$APP/Contents/MacOS/launcher"
+          PY="$APP/Contents/Resources/app/runtime-mac/bin/python3"
+
+          # A .app whose launcher is not executable gives the customer a bare
+          # "The application can't be opened." with no reason. Force the bits
+          # on immediately before packing, whatever happened upstream.
+          echo "--- before packing ---"
+          ls -l "$LAUNCH" "$PY"
+          chmod 755 "$LAUNCH" "$PY"
+          echo "--- after chmod ---"
+          ls -l "$LAUNCH" "$PY"
+
           ( cd "$RUNNER_TEMP/work" && ditto -c -k --sequesterRsrc --keepParent \
               "$TOP" "$OUT/$NAME" )
           ls -lh "$OUT"
+
+          # Unpack what we are about to hand over and check the bits SURVIVED
+          # the zip. ditto is supposed to preserve them; this proves it did
+          # rather than assuming, because the customer is the one who finds out.
+          CHECK="$RUNNER_TEMP/check"
+          rm -rf "$CHECK"; mkdir -p "$CHECK"
+          ditto -x -k "$OUT/$NAME" "$CHECK"
+          CL="$(find "$CHECK" -path '*/Contents/MacOS/launcher' | head -1)"
+          CP="$(find "$CHECK" -path '*/runtime-mac/bin/python3' | head -1)"
+          echo "--- as the customer will receive it ---"
+          ls -l "$CL" "$CP"
+          if [ ! -x "$CL" ] || [ ! -x "$CP" ]; then
+            echo "The packed app is not executable -- it would not open." >&2
+            exit 1
+          fi
+          # and the signature must still be intact after the round trip
+          CA="$(dirname "$(dirname "$CL")")"
+          codesign --verify --deep --strict --verbose=2 "$CA"
+          spctl --assess --type execute --verbose=4 "$CA"
 
       - uses: actions/upload-artifact@v4
         with:
