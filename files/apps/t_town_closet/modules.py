@@ -27,8 +27,9 @@ BUSINESS = {'name': 'T-Town Closet',
  'tagline': 'it needs to track once a rental is placed and IF it requires shipping. '
             'automatically make a shipping label  the cheapest option',
  'logo': False,
+ 'wish_url': 'https://corder-downloads.fly.dev/wish',
  'theme': {},
- 'generated': '2026-08-09 13:50'}
+ 'generated': '2026-08-16 13:20'}
 
 MODULES = [{'key': 'rentals',
   'label': 'Rentals',

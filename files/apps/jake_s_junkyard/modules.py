@@ -27,8 +27,9 @@ BUSINESS = {'name': "Jackson's a Poopy",
  'tagline': 'take reservations, keep up with staff hours, and track what we owe '
             'suppliers',
  'logo': False,
+ 'wish_url': 'https://corder-downloads.fly.dev/wish',
  'theme': {},
- 'generated': '2026-08-09 13:50'}
+ 'generated': '2026-08-16 13:20'}
 
 MODULES = [{'key': 'scheduling',
   'label': 'Schedule',

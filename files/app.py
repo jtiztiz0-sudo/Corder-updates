@@ -15,6 +15,7 @@ from __future__ import annotations
 import os
 import sys
 import secrets
+import threading
 from datetime import date, datetime, timedelta
 
 from flask import Flask, render_template, request, abort, Response
@@ -296,6 +297,51 @@ def photo_show(key: str, row_id: int, field: str):
     return resp
 
 
+def _send_wish(row_id: int, values: dict) -> None:
+    """Post a new request up so it reaches the person who builds this app.
+
+    Updates already come DOWN to this machine; this is the way back, so a
+    request typed in here is seen wherever the app happens to be. Only the
+    sentence they typed is sent -- never a record, never a customer, never
+    anything out of their database.
+
+    Deliberately fire-and-forget on a background thread: the request has
+    already been saved locally by the time this runs, so no network problem
+    may ever slow down or fail the thing they actually pressed. If it cannot
+    get through, it is simply not sent -- their copy still has it.
+    """
+    url = (getattr(modules, "BUSINESS", {}) or {}).get("wish_url") or ""
+    uid = (getattr(modules, "BUSINESS", {}) or {}).get("id") or ""
+    text = ""
+    for f in (modules.by_key("wishlist") or {}).get("fields", []):
+        if f["type"] == "textarea" or f["name"] in ("request", "text", "what"):
+            text = str(values.get(f["name"]) or "").strip()
+            if text:
+                break
+    # https only, so a request cannot be read off the wire on their shop wifi.
+    # Loopback is exempt because that traffic never leaves the machine, and it
+    # is what the tests drive.
+    local = url.startswith(("http://127.0.0.1", "http://localhost"))
+    if not ((url.startswith("https://") or local) and uid and text):
+        return
+
+    def go():
+        import json as _json
+        import urllib.request as _u
+        body = _json.dumps({"app_uid": uid, "local_id": int(row_id),
+                            "text": text}).encode("utf-8")
+        req = _u.Request(url, data=body, method="POST",
+                         headers={"Content-Type": "application/json",
+                                  "User-Agent": "jts-app"})
+        try:
+            with _u.urlopen(req, timeout=10) as r:
+                r.read(200)
+        except Exception as exc:                 # never surfaces to them
+            diagnostics.log("wish", "", "could not send: %s" % exc)
+
+    threading.Thread(target=go, daemon=True).start()
+
+
 def _sum(m: dict) -> float:
     row = db.query_one("SELECT SUM(%s) s FROM %s" % (m["sum_field"], m["table"]))
     return (row["s"] or 0.0) if row else 0.0
@@ -422,6 +468,8 @@ def record_add(key: str):
         if f["required"] and not str(values.get(f["name"]) or "").strip():
             return {"ok": False, "error": f["label"] + " is required"}, 400
     new_id = db.insert(m["table"], created_at=db.now(), **values)
+    if key == "wishlist":
+        _send_wish(new_id, values)
     return {"ok": True, "id": new_id}
 
 
