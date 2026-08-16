@@ -6,10 +6,19 @@
   <title>{% block title %}{{ BUSINESS.name }}{% endblock %}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   {% if BUSINESS.theme %}
-  {#- this business's own colours. Listed against every root selector so it
-      beats the stylesheet's light/dark blocks by source order alone -#}
+  {#- this business's own colours.
+      :root:not([data-theme="light"]) is NOT optional. With no data-theme set
+      -- the default, before anyone touches the toggle -- the only selector
+      here that matched was a bare :root, while the stylesheet's
+      @media(prefers-color-scheme:dark) block uses :root:not([data-theme=light]),
+      which is MORE SPECIFIC. So on a machine set to dark, the app's own dark
+      palette beat the business's colour and the theme silently did nothing.
+      Source order cannot rescue a lower specificity -- the selectors have to
+      match in shape. -#}
   <style>
-    :root, :root[data-theme="dark"], :root[data-theme="light"] {
+    :root,
+    :root:not([data-theme="light"]),
+    :root[data-theme="dark"], :root[data-theme="light"] {
       {% for k, v in BUSINESS.theme.items() %}{{ k }}: {{ v }};
       {% endfor %}
     }

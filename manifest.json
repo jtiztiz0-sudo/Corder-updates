@@ -1,6 +1,6 @@
 {
-  "version": 32,
-  "published": "2026-08-16 13:21",
+  "version": 33,
+  "published": "2026-08-16 15:25",
   "files": {
     "app.py": {
       "sha256": "7b25de8e08aea0507ba03f2f08042b168713550d574623ab320d0a58b94292a9",
@@ -35,8 +35,8 @@
       "size": 3261
     },
     "templates/base.html": {
-      "sha256": "1f76ddc214ac90314cf14d82052ffe2bfe7de7263a54606004b56c0925f45380",
-      "size": 4029
+      "sha256": "e54bcd37c14a607ce94a1979f65c018a7837dc484184646ceb684953c64a95fc",
+      "size": 4516
     },
     "templates/dashboard.html": {
       "sha256": "f49086c669b8b3fdff4b85dac351ec56f76297eebeed337de4d3c889222669e9",
@@ -60,17 +60,17 @@
       "version": 3,
       "files": {
         "modules.py": {
-          "sha256": "caa1d3acb131a0e66f90311ae11105d8c6a7ad4ca797dc5db4cc98c7eafd06a0",
+          "sha256": "eb20d0d0dae5ed5c2f5a460653049df739fac47927d8dd8985757b9b4cc04905",
           "size": 5382
         }
       }
     },
     "jake_s_junkyard": {
-      "version": 3,
+      "version": 4,
       "files": {
         "modules.py": {
-          "sha256": "13fc48f4868b2a8589dce62cb8ada3bb71af0277834bdcdc59b85d5e9646fe54",
-          "size": 11748
+          "sha256": "1aa6297a0d742a055e3cbbc3c8bf2e711937b37c2b137b82f7adfa2c0a5f1116",
+          "size": 12005
         }
       }
     }

@@ -22,14 +22,21 @@ Per-module extras:
                   field <= vs (used by Inventory for low stock)
 """
 
-BUSINESS = {'name': "Jackson's a Poopy",
+BUSINESS = {'name': 'Jackson is a stoopid poopy',
  'id': 'jake_s_junkyard',
  'tagline': 'take reservations, keep up with staff hours, and track what we owe '
             'suppliers',
  'logo': False,
  'wish_url': 'https://corder-downloads.fly.dev/wish',
- 'theme': {},
- 'generated': '2026-08-16 13:21'}
+ 'theme': {'--bg': '#0f2340',
+           '--surface': '#16304f',
+           '--surface-2': '#1d3d63',
+           '--line': '#27507f',
+           '--ink': '#e8eef7',
+           '--muted': '#9db3cf',
+           '--blue': '#5aa9f0',
+           '--shadow': 'none'},
+ 'generated': '2026-08-16 15:25'}
 
 MODULES = [{'key': 'scheduling',
   'label': 'Schedule',
