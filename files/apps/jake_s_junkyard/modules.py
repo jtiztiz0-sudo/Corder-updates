@@ -29,7 +29,7 @@ BUSINESS = {'name': "Jackson's a Poopy",
  'logo': False,
  'wish_url': 'https://corder-downloads.fly.dev/wish',
  'theme': {},
- 'generated': '2026-08-16 13:20'}
+ 'generated': '2026-08-16 13:21'}
 
 MODULES = [{'key': 'scheduling',
   'label': 'Schedule',
