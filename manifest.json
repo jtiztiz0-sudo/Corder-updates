@@ -1,6 +1,6 @@
 {
-  "version": 36,
-  "published": "2026-08-17 00:59",
+  "version": 37,
+  "published": "2026-08-17 01:06",
   "files": {
     "app.py": {
       "sha256": "6c175ee0912c8af1fd9709880a4d583c859e03cd59763ab6c192be48103aa736",
@@ -64,17 +64,17 @@
       "version": 3,
       "files": {
         "modules.py": {
-          "sha256": "8d12173ecbbfa7f987a2bc7b48c839a76ada29d88e40da27f34dd964a5414077",
+          "sha256": "25067cb6cd5c8141d5ac46c87c4981b9cb77cf9e7e0797cee66f90e2b551416e",
           "size": 5382
         }
       }
     },
     "jake_s_junkyard": {
-      "version": 4,
+      "version": 5,
       "files": {
         "modules.py": {
-          "sha256": "1399ad578bba293aa82eb1f7871a8727ec6e3ddae51e440cfd9d891ea1cf8cbf",
-          "size": 12005
+          "sha256": "07aeab8f5cb47bd76573bb123669a876eb0b7a3dc34e90205f97e2191260f14b",
+          "size": 12001
         }
       }
     }
