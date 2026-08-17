@@ -14,13 +14,16 @@ from __future__ import annotations
 
 import os
 import sys
+import json
+import time
 import secrets
 import threading
 from datetime import date, datetime, timedelta
 
 from flask import Flask, render_template, request, abort, Response
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, HERE)
 
 import db
 import modules
@@ -116,6 +119,123 @@ def _which_copy() -> str:
 
 
 COPY_KIND = _which_copy()
+
+
+# --------------------------------------------------------------------------
+# whether this app is allowed to be used
+# --------------------------------------------------------------------------
+# The rules this follows, in order of how much damage getting them wrong would
+# do:
+#
+# 1. IT FAILS OPEN. No internet, the site down, the answer unreadable -- the
+#    app runs. A licence check that fails CLOSED means one bad afternoon on my
+#    server stops every customer trading, which is a far worse outcome than
+#    somebody using an app they haven't paid for for another day.
+# 2. IT NEVER TOUCHES THEIR RECORDS. A lock hides the pages; the database is
+#    untouched, so unlocking puts everything back exactly as it was.
+# 3. THE LAST ANSWER IS REMEMBERED, so an app that is locked cannot be
+#    unlocked simply by pulling the network cable -- but see 1: an answer that
+#    was never received is not a lock.
+# 4. It is honest about what it is: this stops an ordinary person using the
+#    app. Anyone who can read Python can get round it. It is a lock on a door,
+#    not a safe.
+LICENCE_FILE = os.path.join(HERE, "data", "licence.json")
+_licence = {"locked": False, "message": ""}
+
+
+def _load_licence() -> None:
+    global _licence
+    try:
+        with open(LICENCE_FILE, encoding="utf-8") as fh:
+            saved = json.load(fh)
+        _licence = {"locked": bool(saved.get("locked")),
+                    "message": str(saved.get("message") or "")}
+    except Exception:
+        _licence = {"locked": False, "message": ""}       # rule 1
+
+
+def _check_licence() -> None:
+    """Ask the site, on a background thread, once per launch."""
+    base = (getattr(modules, "BUSINESS", {}) or {}).get("wish_url") or ""
+    uid = (getattr(modules, "BUSINESS", {}) or {}).get("id") or ""
+    if not (base and uid):
+        return
+    url = base.rsplit("/", 1)[0] + "/licence/" + uid
+    local = url.startswith(("http://127.0.0.1", "http://localhost"))
+    if not (url.startswith("https://") or local):
+        return
+
+    def go():
+        import urllib.request as _u
+        try:
+            req = _u.Request(url, headers={"User-Agent": "jts-app"})
+            with _u.urlopen(req, timeout=10) as r:
+                answer = json.loads(r.read(4000).decode("utf-8"))
+        except Exception as exc:
+            diagnostics.log("licence", "", "could not check: %s" % exc)
+            return                                        # rule 1
+        if not answer.get("ok"):
+            return
+        state = {"locked": bool(answer.get("locked")),
+                 "message": str(answer.get("message") or "")}
+        global _licence
+        _licence = state
+        try:
+            os.makedirs(os.path.dirname(LICENCE_FILE), exist_ok=True)
+            with open(LICENCE_FILE, "w", encoding="utf-8") as fh:
+                json.dump(state, fh)
+        except OSError:
+            pass
+
+    threading.Thread(target=go, daemon=True).start()
+
+
+_load_licence()
+_check_licence()
+
+
+@app.before_request
+def _guard_licence():
+    # static stays served, or the lock screen comes out unstyled. system_reload
+    # stays allowed on purpose: once it is lifted they can press the button on
+    # the lock screen instead of having to know to close and reopen the app.
+    if request.endpoint in ("static", "system_reload"):
+        return None
+    if _licence["locked"]:
+        return render_template("locked.html", message=_licence["message"]), 403
+    return None
+
+
+@app.route("/system/reload", methods=["POST"])
+def system_reload():
+    """Restart the app.
+
+    Worth having for them, not just for me: an update is applied when the app
+    STARTS, so this is how a fix that has just been sent actually arrives
+    without them having to close it and find the icon again. It is also the
+    first thing to try if the app ever goes odd.
+
+    Nothing is saved on the way out because nothing needs to be -- every page
+    writes as you go, so there is no unsaved state to lose.
+    """
+    if request.remote_addr not in ("127.0.0.1", "::1"):
+        abort(403)                     # local app; nothing else may restart it
+
+    def go():
+        import subprocess
+        time.sleep(0.35)               # let this response reach the window
+        env = dict(os.environ)
+        env["APP_SKIP_INSTALL"] = "1"  # already installed; don't do it again
+        try:
+            subprocess.Popen([sys.executable, os.path.join(HERE, "desktop.py")],
+                             cwd=HERE, env=env)
+        except OSError as exc:
+            diagnostics.log("reload", "", "could not restart: %s" % exc)
+            return
+        os._exit(0)
+
+    threading.Thread(target=go, daemon=True).start()
+    return {"ok": True}
 
 
 @app.context_processor

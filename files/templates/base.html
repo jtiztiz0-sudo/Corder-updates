@@ -55,6 +55,11 @@
        href="{{ url_for('records', key='wishlist') }}"
        title="Ask for something to be changed">{{ m.icon }} {{ m.label }}</a>
     {% endfor %}
+    {# Restart. Worth having for them, not just for me: an update is applied
+       when the app STARTS, so this is how a fix that was just sent actually
+       arrives -- and it is the first thing to try if it ever goes odd. #}
+    <button type="button" id="reloadBtn" class="theme-btn"
+            title="Restart the app — picks up any update, and fixes most oddities">↻</button>
     <button type="button" id="themeBtn" class="theme-btn" title="Toggle dark mode">
       <span id="themeIcon">☀</span>
     </button>
@@ -76,6 +81,37 @@
         document.documentElement.setAttribute("data-theme", next);
         try { localStorage.setItem("app_theme", next); } catch (e) {}
         paint();
+      });
+    })();
+
+    // Restart. The app kills itself and starts a new copy, so the answer to
+    // this request is the LAST thing this process does -- the page then waits
+    // for the new one to come up and reloads onto it. Polling rather than a
+    // fixed sleep: an update landing on the way through can make the restart
+    // take a few seconds, and a guessed delay would either be too short (blank
+    // page) or needlessly slow every time.
+    (function () {
+      var rb = document.getElementById("reloadBtn");
+      if (!rb) return;
+      rb.addEventListener("click", function () {
+        rb.disabled = true;
+        rb.textContent = "…";
+        fetch("/system/reload", {method: "POST"}).catch(function () {});
+        var tries = 0;
+        var timer = setInterval(function () {
+          tries++;
+          fetch("/?ping=" + Date.now(), {cache: "no-store"})
+            .then(function () { clearInterval(timer); location.reload(); })
+            .catch(function () {
+              if (tries > 60) {                 // ~30s: something went wrong
+                clearInterval(timer);
+                rb.disabled = false;
+                rb.textContent = "↻";
+                alert("That didn't restart. Close the app and open it again "
+                      + "from its icon.");
+              }
+            });
+        }, 500);
       });
     })();
 

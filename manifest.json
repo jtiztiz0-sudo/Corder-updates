@@ -1,10 +1,10 @@
 {
-  "version": 33,
-  "published": "2026-08-16 15:25",
+  "version": 34,
+  "published": "2026-08-17 00:45",
   "files": {
     "app.py": {
-      "sha256": "7b25de8e08aea0507ba03f2f08042b168713550d574623ab320d0a58b94292a9",
-      "size": 19221
+      "sha256": "5a1ca7ed2de040a1ab4f4d7c29ec53274ae7ea7ecec888c73e1fd042bdcfe070",
+      "size": 23955
     },
     "db.py": {
       "sha256": "7a86c48e4ea47e5cf11cb9b4da62f028169b141d32e97d93ebc3e7c2da066ed6",
@@ -35,8 +35,8 @@
       "size": 3261
     },
     "templates/base.html": {
-      "sha256": "e54bcd37c14a607ce94a1979f65c018a7837dc484184646ceb684953c64a95fc",
-      "size": 4516
+      "sha256": "c82a1ec771583349a65aa6750e37dcfbbb6048971051ae0f50abde22e1c3dfe9",
+      "size": 6256
     },
     "templates/dashboard.html": {
       "sha256": "f49086c669b8b3fdff4b85dac351ec56f76297eebeed337de4d3c889222669e9",
@@ -50,6 +50,10 @@
       "sha256": "60254c4587c3cb0ce4c8a8b2a8da865d852588ad8d6a9d5376c5915d6b4d2774",
       "size": 1911
     },
+    "templates/locked.html": {
+      "sha256": "645a105e834a885faa68014ea9021ea4396879cf2e494229c15ccc266a676fb5",
+      "size": 2150
+    },
     "static/style.css": {
       "sha256": "f81d19dd98f0a37baa66319dcbfab1c2d3709c1ca47fe137e12fe3b80c139deb",
       "size": 11053
@@ -60,7 +64,7 @@
       "version": 3,
       "files": {
         "modules.py": {
-          "sha256": "eb20d0d0dae5ed5c2f5a460653049df739fac47927d8dd8985757b9b4cc04905",
+          "sha256": "c7d0cc8158ee4e172bd0e74aae32b9df450a39b38073cbf153aeced339d7bf0f",
           "size": 5382
         }
       }
@@ -69,7 +73,7 @@
       "version": 4,
       "files": {
         "modules.py": {
-          "sha256": "1aa6297a0d742a055e3cbbc3c8bf2e711937b37c2b137b82f7adfa2c0a5f1116",
+          "sha256": "a8cede2c1dcd0c6afc2a3a4d57cc9a63b98044b77941d8f75ce25c836cd5f650",
           "size": 12005
         }
       }

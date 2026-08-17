@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ BUSINESS.name }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  {% if BUSINESS.theme %}
+  <style>
+    :root, :root:not([data-theme="light"]),
+    :root[data-theme="dark"], :root[data-theme="light"] {
+      {% for k, v in BUSINESS.theme.items() %}{{ k }}: {{ v }};
+      {% endfor %}
+    }
+  </style>
+  {% endif %}
+</head>
+<body>
+<div class="card" style="max-width:560px;margin:70px auto;text-align:center">
+  <div style="font-size:40px;line-height:1">🔒</div>
+  <h1 style="margin:12px 0 8px">{{ BUSINESS.name }} is paused</h1>
+  <p class="muted" style="font-size:15px">
+    {{ message or "This app has been paused. Please get in touch and we'll have
+       it back on straight away." }}</p>
+  <p class="muted" style="font-size:13px;margin-top:18px">
+    <strong>Nothing has been lost.</strong> Everything you have typed in is
+    still here on this computer, exactly as you left it. It all comes straight
+    back the moment this is lifted.</p>
+  <p class="muted" style="font-size:12px;margin-top:18px">
+    Once it's sorted, press this — no need to close anything.</p>
+  <button type="button" class="btn" id="againBtn" style="margin-top:8px">
+    ↻ Try again</button>
+</div>
+<script>
+// The reload route is deliberately still allowed while locked, so lifting it
+// is one press for them rather than "close the app and find the icon".
+document.getElementById("againBtn").addEventListener("click", function () {
+  var b = this;
+  b.disabled = true;
+  b.textContent = "…";
+  fetch("/system/reload", {method: "POST"}).catch(function () {});
+  var tries = 0;
+  var timer = setInterval(function () {
+    tries++;
+    fetch("/?ping=" + Date.now(), {cache: "no-store"})
+      .then(function () { clearInterval(timer); location.reload(); })
+      .catch(function () {
+        if (tries > 60) {
+          clearInterval(timer);
+          b.disabled = false;
+          b.textContent = "↻ Try again";
+        }
+      });
+  }, 500);
+});
+</script>
+</body>
+</html>
