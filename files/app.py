@@ -190,8 +190,61 @@ def _check_licence() -> None:
     threading.Thread(target=go, daemon=True).start()
 
 
+def _sync_fixed_requests() -> None:
+    """Tick off the requests that have since been dealt with.
+
+    Their app posts a request UP; the fix comes DOWN as an update. Without
+    this last step nothing ever tells THEIR copy the request was answered, so
+    it reads PENDING for ever on their screen while it says Done on mine --
+    which looks exactly like being ignored.
+
+    Only ever marks things DONE, never the other way, and only for rows this
+    app itself created.
+    """
+    base = (getattr(modules, "BUSINESS", {}) or {}).get("wish_url") or ""
+    uid = (getattr(modules, "BUSINESS", {}) or {}).get("id") or ""
+    if not (base and uid and modules.by_key("wishlist")):
+        return
+    url = base.rsplit("/", 1)[0] + "/wishes/fixed/" + uid
+    local = url.startswith(("http://127.0.0.1", "http://localhost"))
+    if not (url.startswith("https://") or local):
+        return
+
+    def go():
+        import urllib.request as _u
+        try:
+            req = _u.Request(url, headers={"User-Agent": "jts-app"})
+            with _u.urlopen(req, timeout=10) as r:
+                ids = (json.loads(r.read(20000).decode("utf-8")) or {}).get("ids") or []
+        except Exception as exc:
+            diagnostics.log("wish", "", "could not check fixed: %s" % exc)
+            return
+        ids = [int(i) for i in ids if str(i).isdigit()][:500]
+        if not ids:
+            return
+        try:
+            m = modules.by_key("wishlist")
+            arch = m.get("archive") or {}
+            status = m.get("status_field") or "status"
+            done = arch.get("done_value") or "Done"
+            stamp = arch.get("stamp_field") or "fixed_at"
+            rows = db.query(
+                "SELECT id FROM %s WHERE id IN (%s) AND %s IS NOT ?"
+                % (m["table"], ",".join("?" * len(ids)), status),
+                tuple(ids) + (done,))
+            for r in rows:
+                db.update(m["table"], r["id"],
+                          **{status: done,
+                             stamp: datetime.now().strftime("%Y-%m-%d %H:%M")})
+        except Exception as exc:
+            diagnostics.log("wish", "", "could not tick off: %s" % exc)
+
+    threading.Thread(target=go, daemon=True).start()
+
+
 _load_licence()
 _check_licence()
+_sync_fixed_requests()
 
 
 @app.before_request

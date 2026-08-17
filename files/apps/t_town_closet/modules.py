@@ -29,7 +29,7 @@ BUSINESS = {'name': 'T-Town Closet',
  'logo': False,
  'wish_url': 'https://corder-downloads.fly.dev/wish',
  'theme': {},
- 'generated': '2026-08-17 00:45'}
+ 'generated': '2026-08-17 00:58'}
 
 MODULES = [{'key': 'rentals',
   'label': 'Rentals',
