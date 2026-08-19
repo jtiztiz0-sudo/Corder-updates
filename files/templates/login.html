@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ BUSINESS.name }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  {% if BUSINESS.theme %}
+  <style>
+    :root, :root:not([data-theme="light"]),
+    :root[data-theme="dark"], :root[data-theme="light"] {
+      {% for k, v in BUSINESS.theme.items() %}{{ k }}: {{ v }};
+      {% endfor %}
+    }
+  </style>
+  {% endif %}
+</head>
+<body>
+<div class="card signin">
+  {% if BUSINESS.logo %}
+  <img class="signin-logo" src="{{ url_for('static', filename='logo.png') }}" alt="">
+  {% endif %}
+  <h1>{{ BUSINESS.name }}</h1>
+  <p class="muted small">Sign in once and this device stays signed in.</p>
+  <form method="post" action="{{ url_for('login') }}">
+    {# autofocus + the right keyboard, because most of the time this is a phone #}
+    <input type="password" name="password" id="pw" placeholder="Password"
+           autocomplete="current-password" autofocus required>
+    <button type="submit">Sign in</button>
+  </form>
+  {% if error %}<p class="signin-error">{{ error }}</p>{% endif %}
+</div>
+</body>
+</html>

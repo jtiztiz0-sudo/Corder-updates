@@ -1,3 +1,17 @@
+/* Changing the password, on the About page of a hosted copy. */
+.pw-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.pw-row input{flex:1 1 170px;width:auto}
+.dev-list{margin:6px 0 10px;padding-left:18px}
+.dev-list li{margin:2px 0}
+/* Signing in. Only ever seen on a hosted copy, and usually on a phone, so it
+   is one box in the middle of the screen and nothing else. */
+.signin{max-width:340px;margin:14vh auto;text-align:center}
+.signin-logo{max-height:52px;max-width:70%;object-fit:contain;margin-bottom:10px}
+.signin h1{margin:0 0 4px;font-size:21px}
+.signin form{margin-top:16px}
+.signin input{margin-bottom:10px;text-align:center;font-size:16px}
+.signin button{width:100%}
+.signin-error{color:var(--red);font-size:13px;margin:12px 0 0}
 /* The About link at the very bottom of every page. Deliberately quiet. */
 .app-foot{text-align:center;padding:26px 0 34px;font-size:11.5px}
 .app-foot a{color:var(--muted);text-decoration:none}

@@ -13,6 +13,76 @@
      up somewhere now and then.</p>
 </div>
 
+{% if hosted %}
+{# Only on a hosted copy -- an app on your own computer has no password to
+   change, because there is nothing to sign in to. #}
+<div class="card" style="max-width:640px">
+  <h2 style="margin-top:0">Your password</h2>
+  <p class="muted small">This is what you type when you sign in on a new phone
+     or computer. Change it whenever you like — if someone leaves, changing it
+     is what stops them getting in.</p>
+  <div class="pw-row">
+    <input type="password" id="pwNow" placeholder="Current password"
+           autocomplete="current-password">
+    <input type="password" id="pwNew" placeholder="New password"
+           autocomplete="new-password">
+    <button type="button" id="pwGo">Change it</button>
+  </div>
+  <p class="muted small" id="pwNote"></p>
+
+  <h3 style="margin:18px 0 4px;font-size:14px">Signed in on</h3>
+  <ul class="dev-list" id="devList"><li class="muted small">Checking…</li></ul>
+  <button type="button" class="ghost" id="devOut">Sign out everything else</button>
+  <p class="muted small">Use this if you lose a phone. This device stays
+     signed in.</p>
+</div>
+<script>
+(function () {
+  var note = document.getElementById("pwNote");
+  function load() {
+    fetch("/devices").then(function (r) { return r.json(); }).then(function (d) {
+      var ul = document.getElementById("devList");
+      ul.innerHTML = "";
+      (d.devices || []).forEach(function (x) {
+        var li = document.createElement("li");
+        li.className = "small";
+        li.textContent = x.label + (x.this_one ? " — this one" : "")
+                       + (x.last_seen ? " · last used " + x.last_seen : "");
+        ul.appendChild(li);
+      });
+      if (!ul.children.length) ul.innerHTML = '<li class="muted small">Nothing yet.</li>';
+    }).catch(function () {});
+  }
+  load();
+  document.getElementById("pwGo").addEventListener("click", function () {
+    var now = document.getElementById("pwNow").value,
+        nw = document.getElementById("pwNew").value;
+    note.textContent = "…";
+    fetch("/password", {method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({current: now, new: nw})
+    }).then(function (r) { return r.json(); }).then(function (d) {
+      if (!d.ok) { note.textContent = d.error || "That didn't work."; return; }
+      document.getElementById("pwNow").value = "";
+      document.getElementById("pwNew").value = "";
+      note.textContent = "Changed. " + (d.signed_out
+        ? "Everything else was signed out — you'll need the new password on those."
+        : "You're still signed in here.");
+      load();
+    }).catch(function () { note.textContent = "That didn't work."; });
+  });
+  document.getElementById("devOut").addEventListener("click", function () {
+    if (!confirm("Sign out every other phone and computer?")) return;
+    fetch("/devices", {method: "POST"}).then(function (r) { return r.json(); })
+      .then(function (d) {
+        note.textContent = "Signed out " + (d.signed_out || 0) + " other device(s).";
+        load();
+      }).catch(function () {});
+  });
+})();
+</script>
+{% endif %}
+
 {% if kind == 'customer' %}
 {# Deliberately at the very bottom, closed, and behind typing the name out in
    full. Removing the app should take a decision, not a stray click. #}

@@ -39,6 +39,18 @@ def init_db() -> None:
     # this" note only ever appears once
     conn.execute("CREATE TABLE IF NOT EXISTS app_state ("
                  "key TEXT PRIMARY KEY, value TEXT)")
+    # One row per signed-in device. Only used when this copy is hosted (see
+    # app.py) -- a copy on someone's own PC never has any rows here.
+    #
+    # The cookie holds a random token and NOTHING else, so it is worth nothing
+    # away from this database: signing a device out is deleting its row, which
+    # is what makes "I lost my phone" a one-click job rather than a password
+    # change that knocks every other device out too.
+    conn.execute("CREATE TABLE IF NOT EXISTS sessions ("
+                 "token TEXT PRIMARY KEY, label TEXT, created_at TEXT, "
+                 "last_seen TEXT)")
+    conn.execute("CREATE TABLE IF NOT EXISTS login_attempts ("
+                 "id INTEGER PRIMARY KEY AUTOINCREMENT, ip TEXT, at TEXT)")
     for m in modules.MODULES:
         cols = ", ".join("%s %s" % (f["name"], _decl(f)) for f in m["fields"])
         conn.execute(
@@ -86,6 +98,17 @@ def delete(table: str, row_id: int) -> None:
     conn.execute("DELETE FROM %s WHERE id = ?" % table, (row_id,))
     conn.commit()
     conn.close()
+
+
+def write(sql: str, params: tuple = ()) -> int:
+    """An UPDATE or DELETE that isn't by row id. `query` does NOT commit, so
+    running one of these through it looks like it worked and changes nothing."""
+    conn = get_conn()
+    cur = conn.execute(sql, params)
+    conn.commit()
+    n = cur.rowcount
+    conn.close()
+    return n
 
 
 def query(sql: str, params: tuple = ()) -> list:

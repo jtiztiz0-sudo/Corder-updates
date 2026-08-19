@@ -17,10 +17,12 @@ import sys
 import json
 import time
 import secrets
+import hashlib
 import threading
 from datetime import date, datetime, timedelta
 
-from flask import Flask, render_template, request, abort, Response
+from flask import (Flask, render_template, request, abort, Response,
+                   redirect, url_for)
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
@@ -260,6 +262,225 @@ def _guard_licence():
 
 
 # --------------------------------------------------------------------------
+# signing in (hosted copies only)
+# --------------------------------------------------------------------------
+# A copy running on someone's own PC needs no password: it listens on that
+# machine only, so anyone who could reach it is already sitting at it. Asking
+# for a password there would be pure friction.
+#
+# A HOSTED copy is on the internet, where the address is the only thing
+# standing between a stranger and the books. So: the password is what switches
+# this on. Set APP_PASSWORD in the host's secrets and every page needs signing
+# in; leave it unset and nothing below does anything at all.
+#
+# The password lives in the host's environment and NEVER in a file -- not in
+# modules.py, not in the delivery zip, not in the repo. Nothing that ships can
+# contain it.
+LOGIN_PASSWORD = (os.environ.get("APP_PASSWORD") or "").strip()
+SESSION_COOKIE = "jts_session"
+SESSION_DAYS = 365
+MAX_TRIES = 8              # per address, per quarter of an hour
+TRY_WINDOW_MIN = 15
+
+
+def hosted() -> bool:
+    """Is this copy on the internet rather than on their own machine?"""
+    return bool(LOGIN_PASSWORD)
+
+
+def _fresh_token() -> str:
+    return secrets.token_urlsafe(32)
+
+
+def _device_label() -> str:
+    """A rough name for the device, so a list of signed-in things is readable.
+    Guessed from the browser's own description -- never anything identifying."""
+    ua = (request.headers.get("User-Agent") or "").lower()
+    if "iphone" in ua or "android" in ua or "mobile" in ua:
+        kind = "Phone"
+    elif "ipad" in ua or "tablet" in ua:
+        kind = "Tablet"
+    elif "mac" in ua:
+        kind = "Mac"
+    elif "windows" in ua:
+        kind = "Windows PC"
+    else:
+        kind = "Device"
+    return kind
+
+
+# THE PASSWORD ITSELF. APP_PASSWORD is only the FIRST one -- what JT hands over
+# on the day. The moment she sets her own it is stored here, hashed, and hers
+# wins from then on. It is her business; she should not have to ring anybody to
+# change who can get in.
+#
+# Stored as a salted PBKDF2 hash, so what sits in the database is not the
+# password and cannot be read back out of a backup.
+#
+# IF SHE FORGETS IT: delete the `password_hash` row from app_state on the
+# server and it falls back to APP_PASSWORD again. That is the reset, and it
+# needs someone with access to the server -- i.e. JT.
+PW_ROUNDS = 200_000
+
+
+def _hash_password(plain: str, salt: bytes = b"") -> str:
+    salt = salt or secrets.token_bytes(16)
+    dk = hashlib.pbkdf2_hmac("sha256", plain.encode("utf-8"), salt, PW_ROUNDS)
+    return "%s$%s" % (salt.hex(), dk.hex())
+
+
+def _stored_hash() -> str:
+    row = db.query_one("SELECT value FROM app_state WHERE key = 'password_hash'")
+    return (row["value"] if row else "") or ""
+
+
+def _password_ok(typed: str) -> bool:
+    stored = _stored_hash()
+    if stored and "$" in stored:
+        salt_hex, want = stored.split("$", 1)
+        try:
+            got = _hash_password(typed, bytes.fromhex(salt_hex)).split("$", 1)[1]
+        except ValueError:
+            return False
+        return secrets.compare_digest(got, want)
+    # never set one of her own -- the one it was handed over with
+    return bool(LOGIN_PASSWORD) and secrets.compare_digest(typed, LOGIN_PASSWORD)
+
+
+def _set_password(plain: str) -> None:
+    db.write("INSERT INTO app_state (key, value) VALUES ('password_hash', ?) "
+             "ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+             (_hash_password(plain),))
+
+
+def _signed_in() -> bool:
+    token = request.cookies.get(SESSION_COOKIE) or ""
+    if not token:
+        return False
+    row = db.query_one("SELECT token FROM sessions WHERE token = ?", (token,))
+    if not row:
+        return False
+    # Touched on every visit, so the year runs from LAST USE rather than from
+    # the day they signed in -- somebody who opens it weekly is never asked
+    # again, which is the whole point.
+    try:
+        db.write("UPDATE sessions SET last_seen = ? WHERE token = ?",
+                 (datetime.now().strftime("%Y-%m-%d %H:%M"), token))
+    except Exception:
+        pass
+    return True
+
+
+def _too_many_tries() -> bool:
+    since = (datetime.now() - timedelta(minutes=TRY_WINDOW_MIN)).strftime(
+        "%Y-%m-%d %H:%M")
+    row = db.query_one("SELECT COUNT(*) n FROM login_attempts "
+                       "WHERE ip = ? AND at > ?",
+                       (request.remote_addr or "?", since))
+    return bool(row and row["n"] >= MAX_TRIES)
+
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if not hosted():
+        return redirect(url_for("dashboard"))
+    if request.method == "GET":
+        if _signed_in():
+            return redirect(url_for("dashboard"))
+        return render_template("login.html", error="")
+
+    if _too_many_tries():
+        return render_template("login.html",
+                               error="Too many tries. Wait a few minutes."), 429
+    typed = (request.form.get("password") or "")
+    if not _password_ok(typed):
+        db.insert("login_attempts", ip=request.remote_addr or "?",
+                  at=datetime.now().strftime("%Y-%m-%d %H:%M"))
+        return render_template("login.html",
+                               error="That password isn't right."), 401
+
+    token = _fresh_token()
+    db.insert("sessions", token=token, label=_device_label(),
+              created_at=datetime.now().strftime("%Y-%m-%d %H:%M"),
+              last_seen=datetime.now().strftime("%Y-%m-%d %H:%M"))
+    resp = redirect(url_for("dashboard"))
+    # Set by the SERVER, not by script. Safari bins script-created storage
+    # after a couple of weeks of not being opened, so a cookie written in
+    # JavaScript would quietly log her out every so often and look broken.
+    resp.set_cookie(SESSION_COOKIE, token,
+                    max_age=SESSION_DAYS * 24 * 3600,
+                    httponly=True, samesite="Lax",
+                    secure=request.url.startswith("https://"))
+    return resp
+
+
+@app.route("/logout", methods=["POST"])
+def logout():
+    token = request.cookies.get(SESSION_COOKIE) or ""
+    if token:
+        db.write("DELETE FROM sessions WHERE token = ?", (token,))
+    resp = redirect(url_for("login") if hosted() else url_for("dashboard"))
+    resp.delete_cookie(SESSION_COOKIE)
+    return resp
+
+
+@app.route("/password", methods=["POST"])
+def change_password():
+    """She sets her own. Needs the current one, so somebody who wandered up to
+    an unlocked screen still can't lock her out of her own books."""
+    if not hosted():
+        return {"ok": False, "error": "no password on this copy"}, 400
+    if not _signed_in():
+        return {"ok": False, "error": "sign in first"}, 403
+    payload = request.get_json(silent=True) or {}
+    now = payload.get("current") or ""
+    new = (payload.get("new") or "").strip()
+    if not _password_ok(now):
+        return {"ok": False, "error": "that isn't the current password"}, 400
+    if len(new) < 6:
+        return {"ok": False, "error": "make it at least 6 characters"}, 400
+    _set_password(new)
+
+    # Everything ELSE gets signed out. Changing the password is what you do
+    # when somebody shouldn't be getting in any more, so leaving their phone
+    # signed in would make it pointless. This device stays in, so she isn't
+    # thrown out of the screen she's looking at.
+    mine = request.cookies.get(SESSION_COOKIE) or ""
+    others = db.write("DELETE FROM sessions WHERE token != ?", (mine,))
+    return {"ok": True, "signed_out": others}
+
+
+@app.route("/devices", methods=["GET", "POST"])
+def devices():
+    """What is signed in, and a way to boot all of it off -- for a lost phone."""
+    if not hosted():
+        return {"ok": True, "devices": []}
+    if not _signed_in():
+        return {"ok": False, "error": "sign in first"}, 403
+    if request.method == "POST":
+        mine = request.cookies.get(SESSION_COOKIE) or ""
+        n = db.write("DELETE FROM sessions WHERE token != ?", (mine,))
+        return {"ok": True, "signed_out": n}
+    mine = request.cookies.get(SESSION_COOKIE) or ""
+    rows = db.query("SELECT token, label, last_seen FROM sessions "
+                    "ORDER BY last_seen DESC")
+    return {"ok": True, "devices": [
+        {"label": r["label"], "last_seen": r["last_seen"],
+         "this_one": r["token"] == mine} for r in rows]}
+
+
+@app.before_request
+def _guard_login():
+    if not hosted():
+        return None                    # their own PC: nothing to sign in to
+    if request.endpoint in ("static", "login", "logout"):
+        return None
+    if _signed_in():
+        return None
+    return redirect(url_for("login"))
+
+
+# --------------------------------------------------------------------------
 # removing the app from this computer
 # --------------------------------------------------------------------------
 # Deliberately awkward to reach and impossible to do by accident: it is at the
@@ -291,7 +512,7 @@ def _backup_dir() -> str:
 
 @app.route("/about")
 def about():
-    return render_template("about.html", kind=COPY_KIND,
+    return render_template("about.html", kind=COPY_KIND, hosted=hosted(),
                            here=HERE, backup=_backup_dir())
 
 
