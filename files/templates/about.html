@@ -13,6 +13,40 @@
      up somewhere now and then.</p>
 </div>
 
+{# The answer to "can he see my stuff?", written down where they can read it
+   without having to ask. Every line below is checked by a test against what
+   the code actually does -- if somebody adds a call that sends more than this,
+   the test fails rather than the promise quietly becoming untrue. #}
+<div class="card" style="max-width:640px">
+  <h2 style="margin-top:0">Your information</h2>
+  {% if hosted %}
+  <p class="muted small">Your records are kept on the JTS server so this works
+     on your phone and your computer at once. That means <strong>JTS can see
+     what's in here</strong> — the same way any online system can. It is not
+     sold, shared, or looked at for any reason other than fixing something
+     you've asked about.</p>
+  <p class="muted small">If you'd rather nobody could, the same app can run on
+     your own computer instead, where nothing leaves it. Ask and it can be
+     moved.</p>
+  {% else %}
+  <p class="muted small"><strong>Everything you type in stays on this
+     computer.</strong> Your customers, jobs, prices, photos and notes are in a
+     file in the folder above and are never sent anywhere. JTS cannot see them
+     and has no way to read them from here.</p>
+  <p class="muted small">Three things do go out, and nothing else:</p>
+  <ul class="muted small" style="margin:6px 0 0 18px">
+    <li>Anything you type in the <strong>Wishlist</strong> tab — that's the
+        point of it, so the change reaches the person who builds this.</li>
+    <li>A check for updates, which asks "is there a newer version?" and sends
+        nothing about you.</li>
+    <li>This app's own name, so the right update comes back.</li>
+  </ul>
+  <p class="muted small" style="margin-top:8px">If something goes wrong and you
+     make a problem report, that file holds the error only — never your
+     records — and it goes nowhere until you send it yourself.</p>
+  {% endif %}
+</div>
+
 {% if hosted %}
 {# Only on a hosted copy -- an app on your own computer has no password to
    change, because there is nothing to sign in to. #}
