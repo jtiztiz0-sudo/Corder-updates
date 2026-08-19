@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>About this app</h1>
+<p class="muted">{{ BUSINESS.name }} — built for you by JTS.</p>
+
+<div class="card" style="max-width:640px">
+  <h2 style="margin-top:0">Where it lives</h2>
+  <p class="muted small">This app and everything in it sits on this computer,
+     in:</p>
+  <p class="mono small">{{ here }}</p>
+  <p class="muted small">Your records never leave this machine. There's a copy
+     of them in that folder under <span class="mono">data</span> — worth backing
+     up somewhere now and then.</p>
+</div>
+
+{% if kind == 'customer' %}
+{# Deliberately at the very bottom, closed, and behind typing the name out in
+   full. Removing the app should take a decision, not a stray click. #}
+<div class="card danger-card" style="max-width:640px">
+  <button type="button" class="linkish" id="rmOpen">Remove this app from this computer</button>
+  <div id="rmBox" style="display:none;margin-top:12px">
+    <p><strong>This takes {{ BUSINESS.name }} off this computer.</strong></p>
+    <p class="muted small">Before anything is removed, a copy of all your
+       records is saved to your Desktop:</p>
+    <p class="mono small">{{ backup }}</p>
+    <p class="muted small">Nothing you've typed in is lost — you keep that
+       folder whatever happens next. If you want the app back later, just ask
+       and it can be put on again.</p>
+    <p class="muted small">To go ahead, type <strong>{{ BUSINESS.name }}</strong>
+       below exactly as it's written:</p>
+    <input type="text" id="rmName" placeholder="{{ BUSINESS.name }}" autocomplete="off">
+    <div style="margin-top:10px">
+      <button type="button" id="rmGo" disabled>Remove it</button>
+      <button type="button" class="ghost" id="rmCancel">Keep it</button>
+    </div>
+    <p class="muted small" id="rmNote" style="margin-top:10px"></p>
+  </div>
+</div>
+<script>
+(function () {
+  var open = document.getElementById("rmOpen"),
+      box = document.getElementById("rmBox"),
+      name = document.getElementById("rmName"),
+      go = document.getElementById("rmGo"),
+      note = document.getElementById("rmNote");
+  var WANT = {{ BUSINESS.name | tojson }};
+  open.addEventListener("click", function () {
+    box.style.display = box.style.display === "none" ? "block" : "none";
+    if (box.style.display === "block") name.focus();
+  });
+  document.getElementById("rmCancel").addEventListener("click", function () {
+    box.style.display = "none";
+    name.value = "";
+    go.disabled = true;
+  });
+  // The button stays dead until the name matches, so it can't be reached by
+  // pressing Enter or by clicking about.
+  name.addEventListener("input", function () {
+    go.disabled = name.value.trim().toLowerCase() !== WANT.trim().toLowerCase();
+  });
+  go.addEventListener("click", function () {
+    if (go.disabled) return;
+    if (!confirm("Last check — remove " + WANT + " from this computer?")) return;
+    go.disabled = true;
+    note.textContent = "Saving a copy of your records…";
+    fetch("/uninstall", {
+      method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({confirm: name.value})
+    }).then(function (r) { return r.json(); }).then(function (d) {
+      if (!d.ok) { note.textContent = d.error || "That didn't work."; return; }
+      document.body.innerHTML =
+        '<div style="max-width:560px;margin:80px auto;text-align:center;' +
+        'font-family:system-ui,sans-serif">' +
+        '<h1>All done</h1><p>' + WANT + ' has been removed from this computer.' +
+        '</p><p>Your records are saved on your Desktop in:<br><strong>' +
+        (d.saved || '') + '</strong></p><p>You can close this window.</p></div>';
+    }).catch(function () { note.textContent = "That didn't work."; });
+  });
+})();
+</script>
+{% endif %}
+{% endblock %}

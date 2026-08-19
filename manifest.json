@@ -1,10 +1,10 @@
 {
-  "version": 37,
-  "published": "2026-08-17 01:06",
+  "version": 38,
+  "published": "2026-08-19 09:59",
   "files": {
     "app.py": {
-      "sha256": "6c175ee0912c8af1fd9709880a4d583c859e03cd59763ab6c192be48103aa736",
-      "size": 26190
+      "sha256": "7ca5abc5184b728d6c6b510bdea82d84b6634c189e866524859175d7a34f62b5",
+      "size": 29970
     },
     "db.py": {
       "sha256": "7a86c48e4ea47e5cf11cb9b4da62f028169b141d32e97d93ebc3e7c2da066ed6",
@@ -15,8 +15,8 @@
       "size": 4357
     },
     "firstrun.py": {
-      "sha256": "71e2e71bc53e75e52ef9c79da6eb8b7d6f2e76628eda86c1d86bae916af9415f",
-      "size": 15226
+      "sha256": "089458c1de6aed4af71750c9346d007eee7e039ad416846f9c226bc796fb9893",
+      "size": 17826
     },
     "diagnostics.py": {
       "sha256": "9648e71fa1f43976f91fc41dfa1d838ff224ade2ab18c1e030243d7309acf22a",
@@ -35,8 +35,8 @@
       "size": 3261
     },
     "templates/base.html": {
-      "sha256": "c82a1ec771583349a65aa6750e37dcfbbb6048971051ae0f50abde22e1c3dfe9",
-      "size": 6256
+      "sha256": "d8ece165aa5162e07898732e4c9705956c7836d8fe03e52a1c4ba46d00fd766f",
+      "size": 6532
     },
     "templates/dashboard.html": {
       "sha256": "f49086c669b8b3fdff4b85dac351ec56f76297eebeed337de4d3c889222669e9",
@@ -54,26 +54,21 @@
       "sha256": "645a105e834a885faa68014ea9021ea4396879cf2e494229c15ccc266a676fb5",
       "size": 2150
     },
+    "templates/about.html": {
+      "sha256": "ab0c9a71dc89a99e12b71120d167dbf3478742bbdc74b9b6883d052b4ae0e4d8",
+      "size": 3804
+    },
     "static/style.css": {
-      "sha256": "f81d19dd98f0a37baa66319dcbfab1c2d3709c1ca47fe137e12fe3b80c139deb",
-      "size": 11053
+      "sha256": "0fd0cafb8b6a3eda80ceec82d1534c8140a2e6fee469b869e516d815b4b5af7d",
+      "size": 11926
     }
   },
   "apps": {
-    "t_town_closet": {
-      "version": 3,
-      "files": {
-        "modules.py": {
-          "sha256": "25067cb6cd5c8141d5ac46c87c4981b9cb77cf9e7e0797cee66f90e2b551416e",
-          "size": 5382
-        }
-      }
-    },
     "jake_s_junkyard": {
       "version": 5,
       "files": {
         "modules.py": {
-          "sha256": "07aeab8f5cb47bd76573bb123669a876eb0b7a3dc34e90205f97e2191260f14b",
+          "sha256": "698532086046248c663c61cfa36af9ab3f34b1a739e7a9a5bc30906be76c540c",
           "size": 12001
         }
       }

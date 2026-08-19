@@ -259,6 +259,93 @@ def _guard_licence():
     return None
 
 
+# --------------------------------------------------------------------------
+# removing the app from this computer
+# --------------------------------------------------------------------------
+# Deliberately awkward to reach and impossible to do by accident: it is at the
+# bottom of a page nothing links to prominently, and it will not run until the
+# business name has been typed out in full.
+#
+# The rule it is built around: THEIR RECORDS ARE NOT MINE TO DELETE. Everything
+# in data/ is copied to their Desktop BEFORE anything is removed, and they are
+# told where it went. Uninstalling the program must never be the same act as
+# losing the work.
+def _install_home() -> str:
+    """The folder this copy actually lives in, if it is an installed one."""
+    return HERE
+
+
+def _backup_dir() -> str:
+    name = "%s backup %s" % (modules.BUSINESS.get("name") or "app",
+                             datetime.now().strftime("%d %b %Y"))
+    for base in (os.path.join(os.path.expanduser("~"), "Desktop"),
+                 os.path.expanduser("~")):
+        if os.path.isdir(base):
+            # built with no escapes at all: this string has to survive
+            # appgen's quoting AND the generated file's, and a backslash
+            # written here arrives mangled at the other end
+            bad = set('/:*?"<>|') | {chr(92)}
+            return os.path.join(base, "".join(c for c in name if c not in bad))
+    return os.path.join(os.path.expanduser("~"), "app backup")
+
+
+@app.route("/about")
+def about():
+    return render_template("about.html", kind=COPY_KIND,
+                           here=HERE, backup=_backup_dir())
+
+
+@app.route("/uninstall", methods=["POST"])
+def uninstall():
+    import shutil
+    import firstrun          # imported here: the app must still open even on a
+                             # copy where this file is somehow missing
+    payload = request.get_json(silent=True) or {}
+    typed = (payload.get("confirm") or "").strip().lower()
+    name = (modules.BUSINESS.get("name") or "").strip().lower()
+
+    # Only a real installed copy may remove itself. The master and the test
+    # copy live inside the workshop and are not anybody's to delete.
+    if COPY_KIND != "customer":
+        return {"ok": False, "error": "this copy can't remove itself"}, 400
+    if not name or typed != name:
+        return {"ok": False, "error": "type the name exactly as it appears"}, 400
+
+    # 1. their records, first and always
+    saved = ""
+    try:
+        src = os.path.join(HERE, "data")
+        if os.path.isdir(src):
+            saved = _backup_dir()
+            n = 1
+            while os.path.exists(saved):
+                n += 1
+                saved = "%s (%d)" % (_backup_dir(), n)
+            shutil.copytree(src, saved)
+    except Exception as exc:
+        # if their work cannot be put somewhere safe, nothing is removed
+        diagnostics.log("uninstall", "", "backup failed: %s" % exc)
+        return {"ok": False, "error": "couldn't save a copy of your records, "
+                                      "so nothing has been removed"}, 500
+
+    # 2. the shortcuts, then the folder -- from OUTSIDE, since this program is
+    #    sitting in the folder being removed and cannot delete itself
+    try:
+        firstrun.schedule_removal(HERE, os.getpid(),
+                                  modules.BUSINESS.get("name") or "App")
+    except Exception as exc:
+        diagnostics.log("uninstall", "", "could not schedule removal: %s" % exc)
+        return {"ok": False, "error": "your records are saved at %s, but the "
+                                      "app couldn't remove itself" % saved}, 500
+
+    def bye():
+        time.sleep(1.0)
+        os._exit(0)
+
+    threading.Thread(target=bye, daemon=True).start()
+    return {"ok": True, "saved": saved}
+
+
 @app.route("/system/reload", methods=["POST"])
 def system_reload():
     """Restart the app.

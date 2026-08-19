@@ -65,6 +65,10 @@
     </button>
   </header>
   <main>{% block content %}{% endblock %}</main>
+  {# The only way to the About page, and the only way to removing the app.
+     Small, grey, right at the bottom -- findable when you go looking, never
+     in the way when you aren't. #}
+  <footer class="app-foot"><a href="{{ url_for('about') }}">About this app</a></footer>
   <script>
     (function () {
       var btn = document.getElementById("themeBtn"), icon = document.getElementById("themeIcon");

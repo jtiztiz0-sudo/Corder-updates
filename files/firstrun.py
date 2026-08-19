@@ -24,7 +24,9 @@ from __future__ import annotations
 import os
 import re
 import sys
+import shlex
 import shutil
+import tempfile
 import subprocess
 
 # Set on the copy we relaunch, so an install can never trigger another one.
@@ -32,6 +34,9 @@ SKIP_ENV = "APP_SKIP_INSTALL"
 CREATE_NO_WINDOW = 0x08000000
 IS_MAC = sys.platform == "darwin"
 IS_WINDOWS = os.name == "nt"
+
+
+BAD_IN_NAME = "[" + chr(92) + '/:*?"<>|' + "]"
 
 
 def _slug(text: str) -> str:
@@ -228,7 +233,7 @@ def _tidy_old_shortcuts(current_name: str, home: str) -> None:
     """Delete Desktop/Start-menu shortcuts this app made under a previous
     name. Only ones whose target is inside our own install folder, so it can
     never remove somebody else's shortcut."""
-    keep = re.sub(r'[\/:*?"<>|]', "", current_name or "").strip() + ".lnk"
+    keep = re.sub(BAD_IN_NAME, "", current_name or "").strip() + ".lnk"
     mine = os.path.abspath(home)
     script = (
         "$keep = %s; $mine = %s;"
@@ -247,6 +252,66 @@ def _tidy_old_shortcuts(current_name: str, home: str) -> None:
                        capture_output=True, creationflags=CREATE_NO_WINDOW)
     except OSError:
         pass
+
+
+def schedule_removal(home: str, pid: int, app_name: str) -> None:
+    """Take the app off this computer, once it has stopped running.
+
+    It cannot delete its own folder while it is sitting in it, so the work is
+    handed to a small script OUTSIDE the folder, which waits for this process
+    to end, removes the shortcuts and then the folder, and finally deletes
+    itself.
+
+    It only ever touches THIS app's own install folder and the shortcuts
+    pointing into it. No path comes from a page and no other folder can be
+    named.
+
+    NB every line is assembled with chr() rather than written as an escape:
+    this text has to survive the generator's quoting AND the generated file's,
+    and a backslash written here arrives mangled at the other end.
+    """
+    nl = chr(10)
+    q = chr(34)
+    home = os.path.abspath(home)
+    tmp = tempfile.gettempdir()
+
+    if IS_MAC:
+        name = app_name or "App"
+        script = os.path.join(tmp, "remove-%d.sh" % pid)
+        lines = [
+            "#!/bin/sh",
+            "while kill -0 %d 2>/dev/null; do sleep 1; done" % pid,
+            "rm -rf %s" % shlex.quote(home),
+            "rm -rf %s %s" % (
+                shlex.quote(os.path.expanduser("~/Applications/%s.app" % name)),
+                shlex.quote(os.path.expanduser("~/Desktop/%s.app" % name))),
+            "rm -f " + q + "$0" + q,
+        ]
+        with open(script, "w", encoding="utf-8", newline=nl) as fh:
+            fh.write(nl.join(lines) + nl)
+        os.chmod(script, 0o755)
+        subprocess.Popen(["/bin/sh", script], start_new_session=True)
+        return
+
+    # Windows: a batch file, because cmd.exe lives outside the folder being
+    # removed and needs nothing installed to run.
+    lnk = re.sub(BAD_IN_NAME, "", app_name or "App") + ".lnk"
+    script = os.path.join(tmp, "remove-%d.cmd" % pid)
+    sep = chr(92)
+    lines = [
+        "@echo off",
+        ":wait",
+        'tasklist /FI "PID eq %d" 2>nul | find "%d" >nul' % (pid, pid),
+        "if not errorlevel 1 (ping -n 2 127.0.0.1 >nul & goto wait)",
+        'rmdir /s /q "%s"' % home,
+        'del /q "%%USERPROFILE%%' + sep + 'Desktop' + sep + '%s" 2>nul' % lnk,
+        'del /q "%%APPDATA%%' + sep + 'Microsoft' + sep + 'Windows' + sep
+        + 'Start Menu' + sep + 'Programs' + sep + '%s" 2>nul' % lnk,
+        'del /q "%~f0"',
+    ]
+    with open(script, "w", encoding="utf-8", newline=chr(13) + nl) as fh:
+        fh.write(nl.join(lines) + nl)
+    subprocess.Popen(["cmd", "/c", script], creationflags=CREATE_NO_WINDOW)
 
 
 def _unmark(folder: str) -> int:

@@ -1,3 +1,17 @@
+/* The About link at the very bottom of every page. Deliberately quiet. */
+.app-foot{text-align:center;padding:26px 0 34px;font-size:11.5px}
+.app-foot a{color:var(--muted);text-decoration:none}
+.app-foot a:hover{color:var(--blue);text-decoration:underline}
+.mono{font-family:ui-monospace,Consolas,monospace;word-break:break-all}
+/* Removing the app. It reads as serious without shouting: nobody arrives here
+   by accident, and the button is dead until the name is typed out. */
+.danger-card{border-color:var(--red)}
+.danger-card .linkish{background:none;border:0;padding:0;color:var(--muted);
+  font-size:12.5px;text-decoration:underline;cursor:pointer;font-weight:400}
+.danger-card .linkish:hover{color:var(--red);background:none}
+.danger-card #rmGo{background:var(--red)}
+.danger-card #rmGo:disabled{background:var(--surface-2);color:var(--muted);
+  cursor:not-allowed}
 :root{
   --bg:#f4f6f8; --surface:#fff; --surface-2:#f0f3f6; --line:#dfe4ea;
   --ink:#1b2430; --muted:#6b7885; --blue:#1565c0; --green:#2e7d32;
