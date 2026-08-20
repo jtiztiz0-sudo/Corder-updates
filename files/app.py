@@ -192,6 +192,57 @@ def _check_licence() -> None:
     threading.Thread(target=go, daemon=True).start()
 
 
+def _flush_wishes() -> None:
+    """Send anything the site might not have yet, every time the app opens.
+
+    _send_wish is fire-and-forget on a daemon thread: if there is no internet
+    when they press it, or the site blinks, or they close the app before the
+    thread finishes, the request is saved HERE and never sent again. They see
+    it in their list and reasonably assume it was received. It never was.
+
+    So on every launch the still-open requests go up again. That is safe to do
+    blindly because the site refuses duplicates on (app_uid, local_id) -- a
+    request it already has is ignored, not doubled.
+    """
+    base = (getattr(modules, "BUSINESS", {}) or {}).get("wish_url") or ""
+    uid = (getattr(modules, "BUSINESS", {}) or {}).get("id") or ""
+    m = modules.by_key("wishlist")
+    if not (base and uid and m):
+        return
+    local = base.startswith(("http://127.0.0.1", "http://localhost"))
+    if not (base.startswith("https://") or local):
+        return
+
+    def go():
+        import json as _json
+        import urllib.request as _u
+        arch = m.get("archive") or {}
+        status = m.get("status_field") or "status"
+        done = arch.get("done_value") or "Done"
+        try:
+            rows = db.query(
+                "SELECT id, request FROM %s WHERE COALESCE(%s,'') != ? "
+                "ORDER BY id DESC LIMIT 50" % (m["table"], status), (done,))
+        except Exception:
+            return
+        for r in rows:
+            text = (r["request"] or "").strip()
+            if not text:
+                continue
+            body = _json.dumps({"app_uid": uid, "local_id": int(r["id"]),
+                                "text": text}).encode("utf-8")
+            req = _u.Request(base, data=body, method="POST",
+                             headers={"Content-Type": "application/json",
+                                      "User-Agent": "jts-app"})
+            try:
+                with _u.urlopen(req, timeout=10) as resp:
+                    resp.read(200)
+            except Exception:
+                return          # still no connection; try again next launch
+
+    threading.Thread(target=go, daemon=True).start()
+
+
 def _sync_fixed_requests() -> None:
     """Tick off the requests that have since been dealt with.
 
@@ -247,6 +298,7 @@ def _sync_fixed_requests() -> None:
 _load_licence()
 _check_licence()
 _sync_fixed_requests()
+_flush_wishes()
 
 
 @app.before_request
