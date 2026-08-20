@@ -145,6 +145,16 @@ LICENCE_FILE = os.path.join(HERE, "data", "licence.json")
 _licence = {"locked": False, "message": ""}
 
 
+def local_version() -> int:
+    """Which engine this copy is running -- the first thing worth knowing when
+    something works here and not there."""
+    try:
+        with open(os.path.join(HERE, "version.txt"), encoding="utf-8") as fh:
+            return int((fh.read() or "0").strip() or 0)
+    except Exception:
+        return 0
+
+
 def _load_licence() -> None:
     global _licence
     try:
@@ -560,6 +570,50 @@ def _backup_dir() -> str:
             bad = set('/:*?"<>|') | {chr(92)}
             return os.path.join(base, "".join(c for c in name if c not in bad))
     return os.path.join(os.path.expanduser("~"), "app backup")
+
+
+@app.route("/connection-check", methods=["POST"])
+def connection_check():
+    """"Is this app able to reach JTS, and are any of my requests stuck?"
+
+    Built because "it isn't showing up on my end" is impossible to diagnose
+    from the other end of a phone. This answers it ON the machine that has the
+    problem: it tries the connection for real, says what went wrong in the
+    app's own words if it failed, and pushes anything stuck while it is there.
+    """
+    import urllib.request as _u
+    base = (getattr(modules, "BUSINESS", {}) or {}).get("wish_url") or ""
+    uid = (getattr(modules, "BUSINESS", {}) or {}).get("id") or ""
+    if not (base and uid):
+        return {"ok": False, "reachable": False,
+                "error": "this copy wasn't set up to send anything"}
+
+    waiting = 0
+    m = modules.by_key("wishlist")
+    if m:
+        arch = m.get("archive") or {}
+        status = m.get("status_field") or "status"
+        done = arch.get("done_value") or "Done"
+        try:
+            waiting = len(db.query(
+                "SELECT id FROM %s WHERE COALESCE(%s,'') != ?"
+                % (m["table"], status), (done,)))
+        except Exception:
+            waiting = 0
+
+    url = base.rsplit("/", 1)[0] + "/licence/" + uid
+    try:
+        req = _u.Request(url, headers={"User-Agent": "jts-app"})
+        with _u.urlopen(req, timeout=12) as r:
+            r.read(400)
+    except Exception as exc:
+        diagnostics.log("connection", "", "check failed: %s" % exc)
+        return {"ok": True, "reachable": False, "waiting": waiting,
+                "error": str(exc)[:160]}
+
+    _flush_wishes()                       # it's reachable -- push anything stuck
+    return {"ok": True, "reachable": True, "waiting": waiting,
+            "version": local_version()}
 
 
 @app.route("/about")

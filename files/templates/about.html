@@ -17,6 +17,44 @@
    without having to ask. Every line below is checked by a test against what
    the code actually does -- if somebody adds a call that sends more than this,
    the test fails rather than the promise quietly becoming untrue. #}
+{# The answer to "I asked for something and nothing happened". It tries the
+   connection for real and pushes anything stuck, so the person WITH the
+   problem can see what is going on instead of describing it down a phone. #}
+<div class="card" style="max-width:640px">
+  <h2 style="margin-top:0">Can this reach JTS?</h2>
+  <p class="muted small">If you've asked for a change and heard nothing, press
+     this. It checks the connection and sends anything that hasn't gone yet.</p>
+  <button type="button" id="connBtn">Check it now</button>
+  <p class="muted small" id="connNote" style="margin-top:10px"></p>
+</div>
+<script>
+document.getElementById("connBtn").addEventListener("click", function () {
+  var b = this, note = document.getElementById("connNote");
+  b.disabled = true;
+  note.textContent = "Checking…";
+  fetch("/connection-check", {method: "POST"})
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+      b.disabled = false;
+      if (!d.ok) { note.textContent = d.error || "Couldn't check."; return; }
+      if (!d.reachable) {
+        note.textContent = "Can't reach JTS from this computer. Anything you've "
+          + "asked for is saved here and will go as soon as it can. "
+          + "(" + (d.error || "no connection") + ")";
+        return;
+      }
+      note.textContent = "Connected. "
+        + (d.waiting ? d.waiting + " request(s) sent just now."
+                     : "Nothing was waiting to go.")
+        + " Version " + (d.version || "?") + ".";
+    })
+    .catch(function () {
+      b.disabled = false;
+      document.getElementById("connNote").textContent = "Couldn't check.";
+    });
+});
+</script>
+
 <div class="card" style="max-width:640px">
   <h2 style="margin-top:0">Your information</h2>
   {% if hosted %}
