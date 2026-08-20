@@ -1,3 +1,12 @@
+/* The answer from "Can this reach JTS?". Loud on purpose -- the first version
+   was small grey text under the button and read as nothing happening at all. */
+.conn-answer{margin-top:12px;padding:10px 12px;border-radius:8px;font-size:15px;
+  line-height:1.45;display:none}
+.conn-answer:not(:empty){display:block}
+.conn-answer.good{background:rgba(79,201,138,.14);border:1px solid var(--green);
+  color:var(--ink)}
+.conn-answer.bad{background:rgba(239,95,95,.14);border:1px solid var(--red);
+  color:var(--ink)}
 /* Changing the password, on the About page of a hosted copy. */
 .pw-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
 .pw-row input{flex:1 1 170px;width:auto}

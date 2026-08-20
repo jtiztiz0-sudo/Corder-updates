@@ -25,32 +25,41 @@
   <p class="muted small">If you've asked for a change and heard nothing, press
      this. It checks the connection and sends anything that hasn't gone yet.</p>
   <button type="button" id="connBtn">Check it now</button>
-  <p class="muted small" id="connNote" style="margin-top:10px"></p>
+  {# The answer has to be loud. The first version put it in small grey text
+     under the button, and the honest report was "nothing happens" -- for a
+     button whose entire job is to tell you something, quiet is broken. #}
+  <div class="conn-answer" id="connNote"></div>
 </div>
 <script>
 document.getElementById("connBtn").addEventListener("click", function () {
   var b = this, note = document.getElementById("connNote");
   b.disabled = true;
+  note.className = "conn-answer";
   note.textContent = "Checking…";
   fetch("/connection-check", {method: "POST"})
     .then(function (r) { return r.json(); })
     .then(function (d) {
       b.disabled = false;
-      if (!d.ok) { note.textContent = d.error || "Couldn't check."; return; }
+      function say(kind, text) {
+        note.className = "conn-answer " + kind;
+        note.textContent = text;
+      }
+      if (!d.ok) { say("bad", d.error || "Couldn't check."); return; }
       if (!d.reachable) {
-        note.textContent = "Can't reach JTS from this computer. Anything you've "
-          + "asked for is saved here and will go as soon as it can. "
-          + "(" + (d.error || "no connection") + ")";
+        say("bad", "Can't reach JTS from this computer. Anything you've asked "
+          + "for is saved here and will go as soon as it can. ("
+          + (d.error || "no connection") + ")");
         return;
       }
-      note.textContent = "Connected. "
+      say("good", "Connected. "
         + (d.waiting ? d.waiting + " request(s) sent just now."
                      : "Nothing was waiting to go.")
-        + " Version " + (d.version || "?") + ".";
+        + " Version " + (d.version || "?") + ".");
     })
     .catch(function () {
       b.disabled = false;
-      document.getElementById("connNote").textContent = "Couldn't check.";
+      note.className = "conn-answer bad";
+      note.textContent = "Couldn't check.";
     });
 });
 </script>
