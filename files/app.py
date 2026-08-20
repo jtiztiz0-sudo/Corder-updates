@@ -141,6 +141,29 @@ COPY_KIND = _which_copy()
 # 4. It is honest about what it is: this stops an ordinary person using the
 #    app. Anyone who can read Python can get round it. It is a lock on a door,
 #    not a safe.
+def _ssl_ctx():
+    """Certificates for https.
+
+    The bundled Python has no certificate authorities of its own, and Python
+    on Windows does not fall back to the Windows store -- so without this
+    every https call fails with "unable to get local issuer certificate" and,
+    because these calls are all best-effort, fails SILENTLY. That one gap
+    stopped updates, the wishlist and the licence check on every delivered
+    copy at once.
+
+    certifi ships in the runtime. If it is somehow missing, fall back to the
+    default context rather than turning verification off -- an app that
+    quietly stops checking who it is talking to is worse than one that cannot
+    reach me.
+    """
+    import ssl
+    try:
+        import certifi
+        return ssl.create_default_context(cafile=certifi.where())
+    except Exception:
+        return None
+
+
 LICENCE_FILE = os.path.join(HERE, "data", "licence.json")
 _licence = {"locked": False, "message": ""}
 
@@ -181,7 +204,7 @@ def _check_licence() -> None:
         import urllib.request as _u
         try:
             req = _u.Request(url, headers={"User-Agent": "jts-app"})
-            with _u.urlopen(req, timeout=10) as r:
+            with _u.urlopen(req, timeout=10, context=_ssl_ctx()) as r:
                 answer = json.loads(r.read(4000).decode("utf-8"))
         except Exception as exc:
             diagnostics.log("licence", "", "could not check: %s" % exc)
@@ -245,7 +268,7 @@ def _flush_wishes() -> None:
                              headers={"Content-Type": "application/json",
                                       "User-Agent": "jts-app"})
             try:
-                with _u.urlopen(req, timeout=10) as resp:
+                with _u.urlopen(req, timeout=10, context=_ssl_ctx()) as resp:
                     resp.read(200)
             except Exception:
                 return          # still no connection; try again next launch
@@ -277,7 +300,7 @@ def _sync_fixed_requests() -> None:
         import urllib.request as _u
         try:
             req = _u.Request(url, headers={"User-Agent": "jts-app"})
-            with _u.urlopen(req, timeout=10) as r:
+            with _u.urlopen(req, timeout=10, context=_ssl_ctx()) as r:
                 ids = (json.loads(r.read(20000).decode("utf-8")) or {}).get("ids") or []
         except Exception as exc:
             diagnostics.log("wish", "", "could not check fixed: %s" % exc)
@@ -604,7 +627,7 @@ def connection_check():
     url = base.rsplit("/", 1)[0] + "/licence/" + uid
     try:
         req = _u.Request(url, headers={"User-Agent": "jts-app"})
-        with _u.urlopen(req, timeout=12) as r:
+        with _u.urlopen(req, timeout=12, context=_ssl_ctx()) as r:
             r.read(400)
     except Exception as exc:
         diagnostics.log("connection", "", "check failed: %s" % exc)
@@ -921,7 +944,7 @@ def _send_wish(row_id: int, values: dict) -> None:
                          headers={"Content-Type": "application/json",
                                   "User-Agent": "jts-app"})
         try:
-            with _u.urlopen(req, timeout=10) as r:
+            with _u.urlopen(req, timeout=10, context=_ssl_ctx()) as r:
                 r.read(200)
         except Exception as exc:                 # never surfaces to them
             diagnostics.log("wish", "", "could not send: %s" % exc)

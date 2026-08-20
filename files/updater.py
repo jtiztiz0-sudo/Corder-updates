@@ -131,9 +131,25 @@ def _my_entry(manifest):
     return entry if isinstance(entry, dict) and isinstance(entry.get("files"), dict) else None
 
 
+def _ssl_ctx():
+    """Certificates for https -- see the same helper in app.py.
+
+    Without this the bundled Python has no certificate authorities and every
+    check died with "unable to get local issuer certificate", silently, so an
+    app in the field could never update itself.
+    """
+    import ssl
+    try:
+        import certifi
+        return ssl.create_default_context(cafile=certifi.where())
+    except Exception:
+        return None
+
+
 def _get(url: str) -> bytes:
     req = urllib.request.Request(url, headers={"User-Agent": "jts-app-updater"})
-    with urllib.request.urlopen(req, timeout=CONNECT_TIMEOUT) as resp:
+    with urllib.request.urlopen(req, timeout=CONNECT_TIMEOUT,
+                                context=_ssl_ctx()) as resp:
         data = resp.read(MAX_BYTES + 1)
     if len(data) > MAX_BYTES:
         raise ValueError("file bigger than expected -- refusing it")

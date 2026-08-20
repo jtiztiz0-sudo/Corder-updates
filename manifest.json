@@ -1,10 +1,10 @@
 {
-  "version": 45,
-  "published": "2026-08-19 20:08",
+  "version": 47,
+  "published": "2026-08-19 21:49",
   "files": {
     "app.py": {
-      "sha256": "3d1059bfa9964243f83b0e7a350a94aedd9715f72d71362215a26a8031a383a4",
-      "size": 42989
+      "sha256": "2903fdf6b4d7ea4282f21bf2d488d0ba50949b215482f6e638a19b111bae5b86",
+      "size": 43940
     },
     "db.py": {
       "sha256": "6bd3c9ca520c8ece8a3a26acdc93f4d6c9bfcd500b5ec8f559ddbfaf4a96e0d1",
@@ -23,8 +23,8 @@
       "size": 3703
     },
     "updater.py": {
-      "sha256": "d68dd5cb3f6d56f80f27179fac5f6f19a22b0700b1ce90fc93c7149c23a52342",
-      "size": 12390
+      "sha256": "49e4924ea5dc313f243fd01517498c1051c62e06cba1027d03344ac767ab23c9",
+      "size": 12891
     },
     "OPEN-THE-APP.bat": {
       "sha256": "d9199656c78e38a8de8419fa1edd4c208fb871ca27c5eca030767b42a9b509bb",
@@ -72,7 +72,7 @@
       "version": 5,
       "files": {
         "modules.py": {
-          "sha256": "c032fa6fcf8ed4fc611bb2f03ebf78d4a6b713cc46737bce77cdff7798deab29",
+          "sha256": "7f031b403b82a4705809d21a626605db6017f924787505bb049a6183ed066c29",
           "size": 12001
         }
       }
