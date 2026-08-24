@@ -54,7 +54,36 @@
   </div>
 </div>
 
-<div class="card">
+{% if cal is not none %}
+{# A dated tab gets a real month view. Built from the rows already on this
+   page, so there is no second address to fetch and it works with no
+   internet -- the same reason everything else here is served locally. #}
+<div class="view-row">
+  <button type="button" class="view-btn" id="vCal">📅 Calendar</button>
+  <button type="button" class="view-btn" id="vList">☰ List</button>
+  <span class="muted tiny" id="calNote"></span>
+</div>
+
+<div class="card cal-card" id="calCard" style="display:none">
+  <div class="cal-head">
+    <button type="button" class="cal-nav" id="calPrev" title="The month before">‹</button>
+    <span class="cal-title" id="calTitle"></span>
+    <button type="button" class="cal-nav" id="calNext" title="The month after">›</button>
+    <button type="button" class="cal-today" id="calToday">Today</button>
+  </div>
+  <div class="cal-dow">
+    <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span>
+    <span>Thu</span><span>Fri</span><span>Sat</span>
+  </div>
+  <div class="cal-grid" id="calGrid"></div>
+  <div class="cal-day" id="calDay" style="display:none"></div>
+</div>
+
+<script type="application/json" id="calData">{{ cal|tojson }}</script>
+<script type="application/json" id="calFirst">{{ cal_first|tojson }}</script>
+{% endif %}
+
+<div class="card" id="listCard">
   <div class="tbl-wrap">
     <table class="tbl edit-tbl">
       <thead>
@@ -332,5 +361,232 @@
       tr.style.display = hit ? "" : "none";
     });
   });
+
+  // ---- the calendar ----
+  // Only on a tab that has dates. Everything it draws comes from the rows
+  // already rendered above, so there is nothing to fetch and it works offline.
+  var calDataEl = document.getElementById("calData");
+  if (calDataEl) {
+    var CAL = JSON.parse(calDataEl.textContent || "[]");
+    var CAL_FIRST = JSON.parse(
+      (document.getElementById("calFirst") || {}).textContent || "false");
+    var grid = document.getElementById("calGrid");
+    var titleEl = document.getElementById("calTitle");
+    var dayEl = document.getElementById("calDay");
+    var noteEl = document.getElementById("calNote");
+    var calCard = document.getElementById("calCard");
+    var listCard = document.getElementById("listCard");
+    var vCal = document.getElementById("vCal");
+    var vList = document.getElementById("vList");
+
+    var MONTHS = ["January", "February", "March", "April", "May", "June",
+                  "July", "August", "September", "October", "November",
+                  "December"];
+
+    // group by day once -- redrawing a month shouldn't walk every record again
+    var BY_DAY = {};
+    CAL.forEach(function (r) {
+      (BY_DAY[r.d] = BY_DAY[r.d] || []).push(r);
+    });
+    Object.keys(BY_DAY).forEach(function (k) {
+      BY_DAY[k].sort(function (a, b) { return (a.t || "").localeCompare(b.t || ""); });
+    });
+
+    function iso(y, m, d) {
+      return y + "-" + ("0" + (m + 1)).slice(-2) + "-" + ("0" + d).slice(-2);
+    }
+    function pretty(day) {
+      var p = day.split("-");
+      return Number(p[2]) + " " + MONTHS[Number(p[1]) - 1].slice(0, 3) + " " + p[0];
+    }
+    // 14:30 -> 2:30 PM. The stored value stays 24h; this is only what's shown.
+    function clock(t) {
+      if (!t) return "";
+      var p = t.split(":");
+      var h = Number(p[0]);
+      if (isNaN(h)) return t;
+      var ap = h < 12 ? "AM" : "PM";
+      var hh = h % 12; if (hh === 0) hh = 12;
+      return hh + ":" + (p[1] || "00") + " " + ap;
+    }
+    function statusClass(s) {
+      s = (s || "").toLowerCase();
+      if (!s) return "";
+      if (/(done|paid|complete|returned|delivered|confirm|sold|accept)/.test(s)) return "ok";
+      if (/(overdue|late|cancel|unpaid|fail)/.test(s)) return "bad";
+      return "wait";
+    }
+
+    // start on the month with something in it nearest to today, so a demo or a
+    // quiet tab doesn't open on an empty grid
+    var today = new Date();
+    var shown = new Date(today.getFullYear(), today.getMonth(), 1);
+    (function () {
+      if (BY_DAY[iso(today.getFullYear(), today.getMonth(), today.getDate())]) return;
+      var days = Object.keys(BY_DAY).sort();
+      if (!days.length) return;
+      var here = iso(today.getFullYear(), today.getMonth(), today.getDate());
+      var best = days[0], gap = Infinity;
+      days.forEach(function (d) {
+        var g = Math.abs(new Date(d) - new Date(here));
+        if (g < gap) { gap = g; best = d; }
+      });
+      var p = best.split("-");
+      shown = new Date(Number(p[0]), Number(p[1]) - 1, 1);
+    })();
+
+    var picked = null;
+
+    function draw() {
+      var y = shown.getFullYear(), mo = shown.getMonth();
+      titleEl.textContent = MONTHS[mo] + " " + y;
+      var first = new Date(y, mo, 1).getDay();
+      var len = new Date(y, mo + 1, 0).getDate();
+      var prevLen = new Date(y, mo, 0).getDate();
+      var todayIso = iso(today.getFullYear(), today.getMonth(), today.getDate());
+
+      var cells = [];
+      for (var i = 0; i < first; i++) {
+        cells.push({out: true, n: prevLen - first + 1 + i});
+      }
+      for (var d = 1; d <= len; d++) {
+        cells.push({out: false, n: d, day: iso(y, mo, d)});
+      }
+      while (cells.length % 7) {
+        cells.push({out: true, n: cells.length % 7});
+      }
+
+      grid.textContent = "";
+      cells.forEach(function (c) {
+        var box = document.createElement("div");
+        box.className = "cal-cell" + (c.out ? " out" : "");
+        if (!c.out) {
+          box.dataset.day = c.day;
+          if (c.day === todayIso) box.classList.add("today");
+          if (c.day === picked) box.classList.add("picked");
+        }
+        var num = document.createElement("span");
+        num.className = "cal-n";
+        num.textContent = c.n;
+        box.appendChild(num);
+
+        var list = (!c.out && BY_DAY[c.day]) || [];
+        list.slice(0, 3).forEach(function (r) {
+          var chip = document.createElement("span");
+          chip.className = "cal-chip " + statusClass(r.st);
+          chip.dataset.rid = r.id;
+          chip.title = (clock(r.t) ? clock(r.t) + " - " : "") + r.l +
+                       (r.s ? " (" + r.s + ")" : "");
+          chip.textContent = (clock(r.t) ? clock(r.t) + " " : "") + r.l;
+          box.appendChild(chip);
+        });
+        if (list.length > 3) {
+          var more = document.createElement("span");
+          more.className = "cal-more";
+          more.textContent = "+" + (list.length - 3) + " more";
+          box.appendChild(more);
+        }
+        grid.appendChild(box);
+      });
+      showDay();
+    }
+
+    function showDay() {
+      dayEl.textContent = "";
+      var list = (picked && BY_DAY[picked]) || [];
+      if (!picked) { dayEl.style.display = "none"; return; }
+      dayEl.style.display = "block";
+      var h = document.createElement("div");
+      h.className = "cal-day-head";
+      h.textContent = pretty(picked) + " - " +
+        (list.length ? list.length + (list.length === 1 ? " thing" : " things")
+                     : "nothing on");
+      dayEl.appendChild(h);
+      list.forEach(function (r) {
+        var line = document.createElement("button");
+        line.type = "button";
+        line.className = "cal-line";
+        line.dataset.rid = r.id;
+        var t = document.createElement("span");
+        t.className = "cal-line-t";
+        t.textContent = clock(r.t) || "";
+        var l = document.createElement("span");
+        l.className = "cal-line-l";
+        l.textContent = r.l;
+        var s = document.createElement("span");
+        s.className = "cal-line-s";
+        s.textContent = r.s || "";
+        line.appendChild(t); line.appendChild(l); line.appendChild(s);
+        if (r.st) {
+          var st = document.createElement("span");
+          st.className = "cal-line-st " + statusClass(r.st);
+          st.textContent = r.st;
+          line.appendChild(st);
+        }
+        dayEl.appendChild(line);
+      });
+    }
+
+    // clicking anything that names a record takes you to it in the list, where
+    // it can actually be edited -- the calendar shows, the list changes
+    function gotoRow(id) {
+      setView("list");
+      var tr = document.querySelector('#rows tr[data-id="' + id + '"]');
+      if (!tr) return;
+      tr.scrollIntoView({block: "center", behavior: "smooth"});
+      tr.classList.add("just-found");
+      setTimeout(function () { tr.classList.remove("just-found"); }, 2000);
+    }
+
+    grid.addEventListener("click", function (e) {
+      var chip = e.target.closest("[data-rid]");
+      if (chip) { gotoRow(chip.dataset.rid); return; }
+      var cell = e.target.closest(".cal-cell");
+      if (!cell || cell.classList.contains("out")) return;
+      picked = (picked === cell.dataset.day) ? null : cell.dataset.day;
+      draw();
+    });
+    dayEl.addEventListener("click", function (e) {
+      var line = e.target.closest("[data-rid]");
+      if (line) gotoRow(line.dataset.rid);
+    });
+
+    document.getElementById("calPrev").addEventListener("click", function () {
+      shown = new Date(shown.getFullYear(), shown.getMonth() - 1, 1); draw();
+    });
+    document.getElementById("calNext").addEventListener("click", function () {
+      shown = new Date(shown.getFullYear(), shown.getMonth() + 1, 1); draw();
+    });
+    document.getElementById("calToday").addEventListener("click", function () {
+      shown = new Date(today.getFullYear(), today.getMonth(), 1);
+      picked = iso(today.getFullYear(), today.getMonth(), today.getDate());
+      draw();
+    });
+
+    var KEY = "view:" + location.pathname;
+    function setView(which) {
+      var onCal = which === "cal";
+      calCard.style.display = onCal ? "block" : "none";
+      if (listCard) listCard.style.display = onCal ? "none" : "block";
+      vCal.classList.toggle("on", onCal);
+      vList.classList.toggle("on", !onCal);
+      try { localStorage.setItem(KEY, which); } catch (e) {}
+      if (onCal) draw();
+    }
+    vCal.addEventListener("click", function () { setView("cal"); });
+    vList.addEventListener("click", function () { setView("list"); });
+
+    var undated = CAL.length ? 0 : 0;
+    var rowCount = document.querySelectorAll("#rows tr").length;
+    undated = rowCount - CAL.length;
+    noteEl.textContent = undated > 0
+      ? (undated + (undated === 1 ? " has no date, so it's only in the list"
+                                  : " have no date, so they're only in the list"))
+      : "";
+
+    var saved = null;
+    try { saved = localStorage.getItem(KEY); } catch (e) {}
+    setView(saved || (CAL_FIRST ? "cal" : "list"));
+  }
 </script>
 {% endblock %}

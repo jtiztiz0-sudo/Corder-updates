@@ -1054,13 +1054,66 @@ def dashboard():
                            done_status=DONE_STATUS, notes=_state(NOTES_KEY))
 
 
+# Tabs that ARE a diary, so they open on the calendar. Everything else with a
+# date still gets the toggle -- it just isn't the first thing you see, because
+# a list of expenses is a list, not a month view.
+CAL_FIRST = {"scheduling", "deliveries"}
+
+
+def _cal_rows(m, rows):
+    """The rows shaped for a month view, or None if this tab has no dates.
+
+    Built here rather than in the page so the labels come from the module's own
+    field list: whatever the business renamed its boxes to is what shows on the
+    calendar, with no second copy of that decision to drift.
+    """
+    df = m.get("date_field")
+    if not df:
+        return None
+    tf = ""
+    for f in m["fields"]:
+        if f.get("type") == "time":
+            tf = f["name"]
+            break
+    sf = m.get("status_field") or ""
+    skip = {df, tf, sf, "id", "created_at"}
+    wordy = [f["name"] for f in m["fields"]
+             if f["name"] not in skip and not f.get("owner_only")
+             and f.get("type") in ("text", "textarea", "email", "phone", "select")]
+    out = []
+    for r in rows:
+        day = (r[df] or "")
+        day = day.strip()[:10] if isinstance(day, str) else ""
+        # only a real yyyy-mm-dd goes on the grid; anything else stays in the
+        # list rather than being guessed at and put on the wrong day
+        if len(day) != 10 or day[4] != "-" or day[7] != "-":
+            continue
+        said = []
+        for n in wordy:
+            v = r[n]
+            if v not in (None, "") and str(v).strip():
+                said.append(str(v).strip())
+            if len(said) == 2:
+                break
+        out.append({
+            "id": r["id"], "d": day,
+            "t": (r[tf] or "") if tf else "",
+            "l": said[0] if said else ("#%s" % r["id"]),
+            "s": said[1] if len(said) > 1 else "",
+            "st": (r[sf] or "") if sf else "",
+        })
+    return out
+
+
 @app.route("/m/<key>")
 def records(key: str):
     m = _module_or_404(key)
     rows = db.query("SELECT * FROM %s ORDER BY %s" % (m["table"], m["sort"]))
     rows, retired = _split_archive(m, rows)
     total = _sum(m) if m["sum_field"] else None
-    return render_template("records.html", m=m, rows=rows, retired=retired, total=total)
+    return render_template("records.html", m=m, rows=rows, retired=retired,
+                           total=total, cal=_cal_rows(m, rows),
+                           cal_first=m["key"] in CAL_FIRST)
 
 
 @app.route("/m/<key>/add", methods=["POST"])

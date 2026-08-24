@@ -243,3 +243,74 @@ a{color:var(--blue)}
   .brand a{font-size:15px}
   main{padding:14px}
 }
+
+/* ---- calendar view (any tab that has dates) ---- */
+/* Every button below resets background/padding/weight: the global `button`
+   rule paints them solid blue with 9x16 padding, which would turn a day cell
+   into a blue block. Same trap every other bare button here has to dodge. */
+.view-row{display:flex;align-items:center;gap:8px;margin:0 0 12px}
+.view-btn{background:var(--surface);border:1px solid var(--line);color:var(--muted);
+  border-radius:8px;padding:6px 12px;font-size:13px;font-weight:600;cursor:pointer}
+.view-btn:hover{border-color:var(--accent);color:var(--ink);filter:none}
+.view-btn.on{background:var(--accent);border-color:var(--accent);color:#fff}
+
+.cal-head{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.cal-title{font-size:17px;font-weight:700;min-width:170px}
+.cal-nav,.cal-today{background:none;border:1px solid var(--line);color:var(--ink);
+  border-radius:7px;padding:3px 10px;font-size:15px;line-height:1.5;
+  font-weight:600;cursor:pointer}
+.cal-today{font-size:12.5px;margin-left:auto}
+.cal-nav:hover,.cal-today:hover{border-color:var(--accent);color:var(--accent);
+  background:none;filter:none}
+
+.cal-dow{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;
+  margin-bottom:4px}
+.cal-dow span{font-size:11px;font-weight:700;letter-spacing:.04em;
+  text-transform:uppercase;color:var(--muted);text-align:center;padding:2px 0}
+
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cal-cell{min-height:92px;border:1px solid var(--line);border-radius:8px;
+  background:var(--surface);padding:4px 4px 5px;display:flex;
+  flex-direction:column;gap:2px;cursor:pointer;overflow:hidden}
+.cal-cell:hover{border-color:var(--accent)}
+.cal-cell.out{background:transparent;border-color:transparent;cursor:default}
+.cal-cell.out .cal-n{opacity:.28}
+.cal-cell.today{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.cal-cell.picked{background:var(--surface-2)}
+.cal-n{font-size:12px;font-weight:700;color:var(--muted);padding:1px 3px}
+.cal-cell.today .cal-n{color:var(--accent)}
+
+.cal-chip{display:block;font-size:11px;line-height:1.35;padding:2px 5px;
+  border-radius:5px;background:var(--surface-2);border-left:3px solid var(--muted);
+  color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  cursor:pointer}
+.cal-chip:hover{background:var(--accent);color:#fff}
+.cal-chip.ok{border-left-color:var(--green)}
+.cal-chip.wait{border-left-color:var(--accent)}
+.cal-chip.bad{border-left-color:var(--red)}
+.cal-more{font-size:10.5px;color:var(--muted);padding:0 5px}
+
+.cal-day{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}
+.cal-day-head{font-size:13px;font-weight:700;color:var(--muted);margin-bottom:6px}
+.cal-line{display:flex;align-items:baseline;gap:10px;width:100%;text-align:left;
+  background:none;border:0;border-radius:7px;padding:6px 8px;cursor:pointer;
+  font-weight:400;color:var(--ink)}
+.cal-line:hover{background:var(--surface-2);filter:none}
+.cal-line-t{flex:0 0 76px;font-size:12.5px;font-weight:700;color:var(--muted)}
+.cal-line-l{font-size:13.5px;font-weight:600}
+.cal-line-s{font-size:12.5px;color:var(--muted)}
+.cal-line-st{margin-left:auto;font-size:11px;font-weight:700;padding:1px 7px;
+  border-radius:20px;background:var(--surface-2);color:var(--muted)}
+.cal-line-st.ok{color:var(--green)}
+.cal-line-st.bad{color:var(--red)}
+.cal-line-st.wait{color:var(--accent)}
+
+/* clicked something on the calendar -- show which row it was */
+tr.just-found td{background:var(--surface-2)}
+tr.just-found{outline:2px solid var(--accent);outline-offset:-2px}
+
+@media (max-width: 760px){
+  .cal-cell{min-height:64px}
+  .cal-chip{font-size:10px}
+  .cal-line-t{flex:0 0 62px}
+}

@@ -36,7 +36,7 @@ BUSINESS = {'name': 'Conrad is handsome asf',
            '--muted': '#8b5f74',
            '--blue': '#c9266f',
            '--green': '#2e7d5b'},
- 'generated': '2026-08-24 10:06'}
+ 'generated': '2026-08-24 10:16'}
 
 MODULES = [{'key': 'scheduling',
   'label': 'Schedule',
