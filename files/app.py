@@ -1054,9 +1054,12 @@ def dashboard():
                            done_status=DONE_STATUS, notes=_state(NOTES_KEY))
 
 
-# Tabs that ARE a diary, so they open on the calendar. Everything else with a
-# date still gets the toggle -- it just isn't the first thing you see, because
-# a list of expenses is a list, not a month view.
+# CAL_TABS: the only tabs that get a calendar at all -- ones where the date is
+# something you plan around. Invoices, Time Clock, Expenses, Daily log and
+# Notes all have dates too, and a month view on any of them is just clutter
+# over a list you were going to read as a list.
+# CAL_FIRST: of those, the ones that ARE a diary, so they open on it.
+CAL_TABS = {"scheduling", "deliveries", "jobs", "rentals"}
 CAL_FIRST = {"scheduling", "deliveries"}
 
 
@@ -1068,7 +1071,7 @@ def _cal_rows(m, rows):
     calendar, with no second copy of that decision to drift.
     """
     df = m.get("date_field")
-    if not df:
+    if not df or m["key"] not in CAL_TABS:
         return None
     tf = ""
     for f in m["fields"]:

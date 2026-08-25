@@ -563,14 +563,17 @@
       draw();
     });
 
-    var KEY = "view:" + location.pathname;
+    // NOT `KEY` -- the page already has one holding this tab's module key, and
+    // `var` is function-scoped, so reusing the name overwrote the address its
+    // add/save/delete calls are built from.
+    var VIEW_KEY = "view:" + location.pathname;
     function setView(which) {
       var onCal = which === "cal";
       calCard.style.display = onCal ? "block" : "none";
       if (listCard) listCard.style.display = onCal ? "none" : "block";
       vCal.classList.toggle("on", onCal);
       vList.classList.toggle("on", !onCal);
-      try { localStorage.setItem(KEY, which); } catch (e) {}
+      try { localStorage.setItem(VIEW_KEY, which); } catch (e) {}
       if (onCal) draw();
     }
     vCal.addEventListener("click", function () { setView("cal"); });
@@ -585,7 +588,7 @@
       : "";
 
     var saved = null;
-    try { saved = localStorage.getItem(KEY); } catch (e) {}
+    try { saved = localStorage.getItem(VIEW_KEY); } catch (e) {}
     setView(saved || (CAL_FIRST ? "cal" : "list"));
   }
 </script>
