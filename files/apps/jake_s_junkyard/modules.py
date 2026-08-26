@@ -22,7 +22,7 @@ Per-module extras:
                   field <= vs (used by Inventory for low stock)
 """
 
-BUSINESS = {'name': 'Conrad is handsome asf',
+BUSINESS = {'name': 'Sarah is a bicep biter',
  'id': 'jake_s_junkyard',
  'tagline': 'take reservations, keep up with staff hours, and track what we owe '
             'suppliers',
@@ -37,7 +37,7 @@ BUSINESS = {'name': 'Conrad is handsome asf',
            '--blue': '#c9266f',
            '--green': '#2e7d5b'},
  'theme_key': 'pink',
- 'generated': '2026-08-25 22:26'}
+ 'generated': '2026-08-25 22:38'}
 
 MODULES = [{'key': 'scheduling',
   'label': 'Schedule',

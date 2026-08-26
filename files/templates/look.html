@@ -101,12 +101,22 @@
   }
 
   // Repaint straight away rather than waiting for a reload -- picking a colour
-  // and seeing nothing happen for a second feels broken.
+  // and seeing nothing happen feels broken.
+  //
+  // REWRITE the block rather than setting properties on the element. Setting
+  // them cannot express "this palette has none": picking Blue (default) set
+  // nothing, so the previous palette's block stayed and the page did not
+  // change. Replacing the block is what a reload would do, for every palette.
   function paint(vars) {
-    var root = document.documentElement;
+    var block = document.getElementById("themeVars");
+    if (!block) return;
+    var body = "";
     Object.keys(vars || {}).forEach(function (k) {
-      root.style.setProperty(k, vars[k]);
+      body += k + ": " + vars[k] + ";";
     });
+    block.textContent =
+      ':root, :root:not([data-theme="light"]),' +
+      ':root[data-theme="dark"], :root[data-theme="light"] {' + body + "}";
   }
 
   document.getElementById("lookThemes").addEventListener("click", function (e) {

@@ -6,8 +6,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}{{ BUSINESS.name }}{% endblock %}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-  {% if LOOK.vars %}
-  {#- this business's own colours.
+    {#- Always rendered, even when empty. Picking "Blue (default)" sets no
+      variables at all, so with no block here there was nothing to clear and
+      the PREVIOUS palette's block stayed on the page -- every colour worked
+      except that one, which looked broken until you reloaded.
+      this business's own colours.
       :root:not([data-theme="light"]) is NOT optional. With no data-theme set
       -- the default, before anyone touches the toggle -- the only selector
       here that matched was a bare :root, while the stylesheet's
@@ -16,7 +19,7 @@
       palette beat the business's colour and the theme silently did nothing.
       Source order cannot rescue a lower specificity -- the selectors have to
       match in shape. -#}
-  <style>
+  <style id="themeVars">
     :root,
     :root:not([data-theme="light"]),
     :root[data-theme="dark"], :root[data-theme="light"] {
@@ -24,7 +27,6 @@
       {% endfor %}
     }
   </style>
-  {% endif %}
   <script>
     // apply the saved theme before first paint, so there's no flash of the
     // wrong one. Nothing saved = follow the operating system.
