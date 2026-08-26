@@ -80,10 +80,15 @@ nav a.active{color:#fff;background:var(--blue)}
   flex:0 0 auto;transition:background .15s ease,color .15s ease,border-color .15s ease}
 .tool-tab:hover{color:var(--blue);border-color:var(--blue)}
 .tool-tab.active{color:#fff;background:var(--blue);border-color:var(--blue)}
+/* padding:0 is load-bearing. The global button rule sets padding:9px 15px,
+   and on a fixed 32px circle that leaves a content box with no width and only
+   12px of height. It happens to centre anyway -- but only by luck, and touch
+   the padding on ONE side and the glyph slides off centre, which is exactly
+   what the side layout used to do to the reload arrow. */
 .theme-btn{margin-left:10px;background:none;border:1px solid var(--line);
-  border-radius:50%;width:32px;height:32px;cursor:pointer;font-size:15px;
-  color:var(--muted);line-height:1;display:flex;align-items:center;
-  justify-content:center;flex:0 0 auto}
+  border-radius:50%;width:32px;height:32px;padding:0;cursor:pointer;
+  font-size:15px;color:var(--muted);line-height:1;display:flex;
+  align-items:center;justify-content:center;flex:0 0 auto}
 .theme-btn:hover{background:var(--bg);color:var(--blue);border-color:var(--blue)}
 
 main{max-width:1280px;margin:0 auto;padding:22px}
@@ -428,9 +433,16 @@ nav a{font-size:calc(13px * var(--scale));padding:calc(7px * var(--scale))
   font-size:calc(14.5px * var(--scale));border-radius:10px}
 
 /* the controls become a real footer with a rule above them, so the bottom of
-   the column looks finished instead of trailing off */
-:root[data-layout="side"] header > .theme-btn:first-of-type{margin-top:14px;
-  padding-top:0;border-top:1px solid var(--line)}
+   the column looks finished instead of trailing off.
+   The rule is drawn as a pseudo-element ACROSS THE COLUMN, not as a border on
+   the button: the button is a circle that already has a border all the way
+   round, so a border-top there is invisible -- and the padding-top:0 that
+   used to sit beside it knocked the reload arrow 4.5px above centre. */
+:root[data-layout="side"] header > .theme-btn:first-of-type{margin-top:22px;
+  position:relative}
+:root[data-layout="side"] header > .theme-btn:first-of-type::before{
+  content:"";position:absolute;top:-12px;left:-6px;width:180px;
+  border-top:1px solid var(--line)}
 :root[data-layout="side"] .theme-btn{margin-left:0;margin-top:8px;
   align-self:flex-start}
 :root[data-layout="side"] main{margin-left:214px;max-width:1160px}

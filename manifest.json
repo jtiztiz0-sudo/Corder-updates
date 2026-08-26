@@ -1,6 +1,6 @@
 {
-  "version": 61,
-  "published": "2026-08-25 22:38",
+  "version": 62,
+  "published": "2026-08-25 23:45",
   "files": {
     "app.py": {
       "sha256": "535afaa13259892469b9fc0512e5556f8b09a542e4696c5b5ac8fc605d8deb53",
@@ -71,8 +71,8 @@
       "size": 7785
     },
     "static/style.css": {
-      "sha256": "4506b711cdd31e706fee8176bcc5d1a13b2eb57afb3e763933e3ea52eba91db2",
-      "size": 26739
+      "sha256": "497a7411dfeeaad3bc36ba1121b7a87d5f85697be16583527d5afde6a3c0be35",
+      "size": 27559
     }
   },
   "apps": {
@@ -80,7 +80,7 @@
       "version": 8,
       "files": {
         "modules.py": {
-          "sha256": "364306527445275ac65a6639f9982fa951f4ba79b6702063f3200becc7913faa",
+          "sha256": "a747a47cd6e66e049be53371c096b21853a061d7708cdfd8ad5d5f38b6d7e5a5",
           "size": 12025
         }
       }
