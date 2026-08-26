@@ -1,10 +1,10 @@
 {
-  "version": 59,
-  "published": "2026-08-25 21:23",
+  "version": 60,
+  "published": "2026-08-25 22:26",
   "files": {
     "app.py": {
-      "sha256": "16ad53398b54715d393cdda83d6f3016981390046172f41faba5158f9b66fe08",
-      "size": 54131
+      "sha256": "535afaa13259892469b9fc0512e5556f8b09a542e4696c5b5ac8fc605d8deb53",
+      "size": 55328
     },
     "db.py": {
       "sha256": "6bd3c9ca520c8ece8a3a26acdc93f4d6c9bfcd500b5ec8f559ddbfaf4a96e0d1",
@@ -43,8 +43,8 @@
       "size": 7605
     },
     "templates/dashboard.html": {
-      "sha256": "f49086c669b8b3fdff4b85dac351ec56f76297eebeed337de4d3c889222669e9",
-      "size": 3977
+      "sha256": "651b6fb9243cb5dec35409e869255837147195fd80bf0956244d87aa7bffaf0a",
+      "size": 5862
     },
     "templates/records.html": {
       "sha256": "006b14b1e41876270d75cbe2badf820c28e627296fae57160c0e48df34c7b36c",
@@ -71,8 +71,8 @@
       "size": 7281
     },
     "static/style.css": {
-      "sha256": "84770e208f06f703ca5313ed593175b0cff1369d76526326efc2757889c49d3d",
-      "size": 25377
+      "sha256": "4506b711cdd31e706fee8176bcc5d1a13b2eb57afb3e763933e3ea52eba91db2",
+      "size": 26739
     }
   },
   "apps": {
@@ -80,7 +80,7 @@
       "version": 7,
       "files": {
         "modules.py": {
-          "sha256": "fa847d6a8acfb43fc94641aef26c0e849870c444924aa9019c04ded7f9191696",
+          "sha256": "3ec43eb3d083c5304de7a8df7489722b94dd9f94d7444f35f88f50074767f2e4",
           "size": 12025
         }
       }

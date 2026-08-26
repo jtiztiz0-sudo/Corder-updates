@@ -42,34 +42,79 @@
 </div>
 {% endif %}
 
-<div class="card">
-  <h2>Today — {{ today }}</h2>
-  {% if today_rows %}
-  <table class="tbl">
-    <tbody>
-      {% for t in today_rows %}
-      <tr>
-        <td class="w-tag"><span class="tag">{{ t['m'].icon }} {{ t['m'].label }}</span></td>
-        {% for f in t['m'].fields[:3] %}
-          <td>{{ t['r'][f.name] if t['r'][f.name] is not none else '' }}</td>
-        {% endfor %}
-        <td class="w-open"><a href="{{ url_for('records', key=t['m'].key) }}">open</a></td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-  {% else %}
-  <p class="empty">Nothing dated today.</p>
-  {% endif %}
-</div>
+{# Two columns on a wide screen. As one column these were two nearly-empty
+   full-width blocks with a lot of nothing either side of them. #}
+<div class="dash-cols">
+  <div>
+    <div class="card">
+      <h2>Today — {{ today }}</h2>
+      {% if today_rows %}
+      <table class="tbl">
+        <tbody>
+          {% for t in today_rows %}
+          <tr>
+            <td class="w-tag"><span class="tag">{{ t['m'].icon }} {{ t['m'].label }}</span></td>
+            {% for f in t['m'].fields[:3] %}
+              <td>{{ t['r'][f.name] if t['r'][f.name] is not none else '' }}</td>
+            {% endfor %}
+            <td class="w-open"><a href="{{ url_for('records', key=t['m'].key) }}">open</a></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% elif soon %}
+      {# "Nothing dated today" is true most days and tells you nothing. What is
+         coming up is the thing you actually wanted to know. #}
+      <p class="muted small" style="margin:0 0 10px">Nothing today. Next up:</p>
+      <table class="tbl">
+        <tbody>
+          {% for t in soon %}
+          <tr>
+            <td class="w-when">{{ t['when']|shortdate }}</td>
+            <td class="w-tag"><span class="tag">{{ t['m'].icon }} {{ t['m'].label }}</span></td>
+            {% for f in t['m'].fields[:2] %}
+              <td>{{ t['r'][f.name] if t['r'][f.name] is not none else '' }}</td>
+            {% endfor %}
+            <td class="w-open"><a href="{{ url_for('records', key=t['m'].key) }}">open</a></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <p class="empty">Nothing dated today, and nothing coming up.</p>
+      {% endif %}
+    </div>
 
-{# somewhere to jot things down without it having to be a record of anything.
-   Saves as you type -- no Save button to forget. #}
-<div class="card">
-  <h2>Notes</h2>
-  <textarea id="dashNotes" class="dash-notes"
-            placeholder="Anything you want to remember — orders to chase, who's covering Friday, what to tell the supplier…">{{ notes }}</textarea>
-  <p class="muted note-saved" id="notesSaved">Saved</p>
+    {% if recent %}
+    {# The pulse of the place: what went in last, without opening anything. #}
+    <div class="card">
+      <h2>Last few things added</h2>
+      <table class="tbl">
+        <tbody>
+          {% for t in recent %}
+          <tr>
+            <td class="w-when">{{ t['when']|shortdate }}</td>
+            <td class="w-tag"><span class="tag">{{ t['m'].icon }} {{ t['m'].label }}</span></td>
+            {% for f in t['m'].fields[:2] %}
+              <td>{{ t['r'][f.name] if t['r'][f.name] is not none else '' }}</td>
+            {% endfor %}
+            <td class="w-open"><a href="{{ url_for('records', key=t['m'].key) }}">open</a></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+  </div>
+
+  {# somewhere to jot things down without it having to be a record of anything.
+     Saves as you type -- no Save button to forget. #}
+  <div class="card dash-side">
+    <h2>Notes</h2>
+    <textarea id="dashNotes" class="dash-notes"
+              placeholder="Anything you want to remember — orders to chase, who's covering Friday, what to tell the supplier…">{{ notes }}</textarea>
+    <p class="muted note-saved" id="notesSaved">Saved</p>
+  </div>
 </div>
 <script>
   (function () {

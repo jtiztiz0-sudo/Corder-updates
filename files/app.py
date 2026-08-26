@@ -642,17 +642,7 @@ def connection_check():
 # ---- how this app is painted -------------------------------------------
 # Every palette, so the app can repaint itself with nothing to fetch and no
 # code generation on their machine. Injected from the generator's own THEMES.
-PALETTES = {'blue': {'label': 'Blue',
-          'swatch': '#1b4f8a',
-          'vars': {'--bg': '#0f2340',
-                   '--blue': '#5aa9f0',
-                   '--ink': '#e8eef7',
-                   '--line': '#27507f',
-                   '--muted': '#9db3cf',
-                   '--shadow': 'none',
-                   '--surface': '#16304f',
-                   '--surface-2': '#1d3d63'}},
- 'default': {'label': 'Default', 'swatch': '#1565c0', 'vars': {}},
+PALETTES = {'default': {'label': 'Blue (default)', 'swatch': '#1565c0', 'vars': {}},
  'green': {'label': 'Green',
            'swatch': '#1f5c3d',
            'vars': {'--bg': '#0f2318',
@@ -1237,6 +1227,51 @@ def wishlist_seen():
     return {"ok": True}
 
 
+
+
+def _soon(today, days=14, limit=6):
+    """What is coming up, so an empty day does not leave an empty card.
+
+    "Nothing dated today" is true most days and tells you nothing. The next
+    thing due is what you actually wanted to know.
+    """
+    out = []
+    for m in modules.MODULES:
+        df = m.get("date_field")
+        if not df:
+            continue
+        try:
+            rows = db.query("SELECT * FROM %s WHERE %s > ? AND %s <= date(?, '+%d day') "
+                            "ORDER BY %s LIMIT ?"
+                            % (m["table"], df, df, int(days), df),
+                            (today, today, limit))
+        except Exception:
+            continue
+        for r in rows:
+            out.append({"m": m, "r": r, "when": r[df]})
+    out.sort(key=lambda x: str(x["when"] or ""))
+    return out[:limit]
+
+
+def _recent(limit=6):
+    """The last few things put in, across every tab.
+
+    Gives a quiet week something true to show, and on a busy one it is the
+    pulse of the place -- who added what, without opening anything.
+    """
+    out = []
+    for m in modules.MODULES:
+        try:
+            rows = db.query("SELECT * FROM %s WHERE COALESCE(created_at,'') != '' "
+                            "ORDER BY created_at DESC LIMIT ?" % m["table"], (limit,))
+        except Exception:
+            continue
+        for r in rows:
+            out.append({"m": m, "r": r, "when": r["created_at"]})
+    out.sort(key=lambda x: str(x["when"] or ""), reverse=True)
+    return out[:limit]
+
+
 @app.route("/")
 def dashboard():
     today = date.today().isoformat()
@@ -1255,6 +1290,7 @@ def dashboard():
     wishes, just_fixed = _wishlist()
     return render_template("dashboard.html", cards=cards,
                            today_rows=today_rows, today=today,
+                           soon=_soon(today), recent=_recent(),
                            wishes=wishes, just_fixed=just_fixed,
                            done_status=DONE_STATUS, notes=_state(NOTES_KEY))
 

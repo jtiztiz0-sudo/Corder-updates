@@ -388,13 +388,23 @@ nav a{font-size:calc(13px * var(--scale));padding:calc(7px * var(--scale))
   padding:18px 14px;border-right:1px solid var(--line);border-bottom:0;
   overflow-y:auto;overflow-x:hidden;z-index:5}
 
-/* the business name becomes a proper heading with a rule under it, instead of
-   a line of text jammed against the first menu item */
-:root[data-layout="side"] .brand{white-space:normal;padding:0 4px 14px;
-  margin-bottom:12px;border-bottom:1px solid var(--line)}
-:root[data-layout="side"] .brand a{white-space:normal;font-size:calc(16.5px * var(--scale));
-  line-height:1.3;align-items:flex-start}
-:root[data-layout="side"] .brand-logo{max-height:30px}
+/* THE title, not one of two. The dashboard used to print the business name
+   again as an <h1> immediately to the right of this, at the same height --
+   the same words twice, side by side, which is what looked wrong. Here it is
+   given the room to be the title instead. */
+:root[data-layout="side"] .brand{white-space:normal;padding:6px 6px 18px;
+  margin-bottom:14px;border-bottom:1px solid var(--line)}
+:root[data-layout="side"] .brand a{white-space:normal;
+  font-size:calc(19px * var(--scale));font-weight:700;line-height:1.25;
+  letter-spacing:-.01em;align-items:flex-start;gap:9px}
+:root[data-layout="side"] .brand-logo{max-height:34px}
+
+/* so the heading is not printed twice. The tagline takes the lead instead, in
+   full-strength ink, so the page still opens with a line rather than jumping
+   straight into the counters. */
+:root[data-layout="side"][data-page="dashboard"] main > h1{display:none}
+:root[data-layout="side"][data-page="dashboard"] main > p.sub{
+  font-size:calc(17px * var(--scale));color:var(--ink);margin:2px 0 20px}
 
 /* the base nav is a PILL ROW -- a grey rounded box with padding. As a column
    that reads as a stray panel, so it goes back to being plain. It also scrolls
@@ -470,3 +480,19 @@ nav a{font-size:calc(13px * var(--scale));padding:calc(7px * var(--scale))
   border:2px solid var(--line);border-radius:10px;padding:9px 13px;
   cursor:pointer;font-weight:600;font-size:13.5px;color:var(--ink)}
 .look-pick:hover{border-color:var(--accent)}
+
+/* ---- the front page ----
+   Two columns on a wide screen. As one column, Today and Notes were two
+   nearly-empty full-width blocks with a lot of nothing either side. */
+.dash-cols{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);
+  gap:18px;align-items:start}
+@media (max-width: 980px){ .dash-cols{grid-template-columns:1fr} }
+.dash-side{position:sticky;top:72px}
+:root[data-layout="side"] .dash-side{top:18px}
+.dash-side .dash-notes{min-height:270px}
+.w-when{white-space:nowrap;color:var(--muted);font-size:12.5px;width:74px}
+
+/* the counters carry the top of the page, so give them a bit more presence */
+.stat-grid{grid-template-columns:repeat(auto-fill,minmax(186px,1fr))}
+.stat-card{padding:18px}
+.stat-card:hover{border-color:var(--accent)}
