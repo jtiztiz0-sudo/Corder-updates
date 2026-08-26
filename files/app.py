@@ -769,6 +769,11 @@ def look_page():
 def look_save():
     """Save a choice. No Save button and no restart -- the next page render
     uses it, the same way the dark-mode toggle already behaves."""
+    # Clear any pending reset FIRST. _look() is what notices that JTS has sent
+    # the app out again and wipes their choices -- if that ran afterwards it
+    # would wipe the change being made right now, so the first thing they ever
+    # picked would silently not take.
+    _look()
     payload = request.get_json(silent=True) or {}
     what = (payload.get("what") or "").strip()
     value = (payload.get("value") or "").strip()

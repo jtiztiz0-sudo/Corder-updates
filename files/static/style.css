@@ -358,12 +358,26 @@ body{font-size:calc(15px * var(--scale))}
 /* ---- the three layouts. CSS only, over ONE set of markup: a template per
    layout would mean building every future screen three times. ---- */
 :root[data-layout="side"] header{position:fixed;top:0;left:0;bottom:0;
+  /* height:100vh is NOT optional. The base header rule sets height:56px, and
+     an explicit height beats top+bottom on a fixed element -- so the sidebar
+     stayed a 56px box with overflow-y:auto, which hid the whole menu behind
+     a scrollbar. */
+  height:100vh;
   width:186px;flex-direction:column;align-items:stretch;gap:10px;
   padding:16px 12px;border-right:1px solid var(--line);border-bottom:0;
-  overflow-y:auto;z-index:5}
+  overflow-y:auto;overflow-x:hidden;z-index:5}
+/* the base nav scrolls sideways, which is right for a row of tabs and wrong
+   for a column of them */
 :root[data-layout="side"] header nav{flex-direction:column;align-items:stretch;
-  gap:3px;margin:6px 0 0}
-:root[data-layout="side"] header nav a{width:100%}
+  gap:3px;margin:6px 0 0;overflow-x:visible;overflow-y:visible;flex:0 0 auto}
+:root[data-layout="side"] header nav a{width:100%;text-align:left}
+/* a long business name has to wrap in a narrow column, not scroll */
+:root[data-layout="side"] .brand{white-space:normal;line-height:1.25}
+:root[data-layout="side"] .brand a{white-space:normal}
+/* the round buttons sit in a row under the menu rather than stacking */
+:root[data-layout="side"] header > .theme-btn,
+:root[data-layout="side"] header > a.theme-btn{margin-left:0}
+:root[data-layout="side"] main{max-width:1180px}
 :root[data-layout="side"] .brand{margin-bottom:4px}
 :root[data-layout="side"] .theme-btn,
 :root[data-layout="side"] .tool-tab{margin-left:0}
