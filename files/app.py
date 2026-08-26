@@ -642,8 +642,25 @@ def connection_check():
 # ---- how this app is painted -------------------------------------------
 # Every palette, so the app can repaint itself with nothing to fetch and no
 # code generation on their machine. Injected from the generator's own THEMES.
-PALETTES = {'default': {'label': 'Blue (default)', 'swatch': '#1565c0', 'vars': {}},
- 'green': {'label': 'Green',
+PALETTES = {'default': {'dark': {'--bg': '#0f1a2e',
+                      '--blue': '#5aa9ff',
+                      '--ink': '#e4ecf7',
+                      '--line': '#27405f',
+                      '--muted': '#93a8c4',
+                      '--shadow': 'none',
+                      '--surface': '#16243d',
+                      '--surface-2': '#1d2f4d'},
+             'label': 'Blue (default)',
+             'swatch': '#1565c0',
+             'vars': {'--bg': '#eef4fc',
+                      '--blue': '#1565c0',
+                      '--ink': '#16233a',
+                      '--line': '#cfdcee',
+                      '--muted': '#5d7292',
+                      '--surface': '#ffffff',
+                      '--surface-2': '#e3ecf9'}},
+ 'green': {'dark': {},
+           'label': 'Green',
            'swatch': '#1f5c3d',
            'vars': {'--bg': '#0f2318',
                     '--blue': '#4fc98a',
@@ -654,7 +671,8 @@ PALETTES = {'default': {'label': 'Blue (default)', 'swatch': '#1565c0', 'vars': 
                     '--shadow': 'none',
                     '--surface': '#163024',
                     '--surface-2': '#1d3f2f'}},
- 'mono': {'label': 'Grey',
+ 'mono': {'dark': {},
+          'label': 'Grey',
           'swatch': '#5b6470',
           'vars': {'--bg': '#f2f3f5',
                    '--blue': '#4a5568',
@@ -663,7 +681,8 @@ PALETTES = {'default': {'label': 'Blue (default)', 'swatch': '#1565c0', 'vars': 
                    '--muted': '#6b7280',
                    '--surface': '#ffffff',
                    '--surface-2': '#e8eaed'}},
- 'pink': {'label': 'Pink',
+ 'pink': {'dark': {},
+          'label': 'Pink',
           'swatch': '#e5559a',
           'vars': {'--bg': '#fff0f6',
                    '--blue': '#c9266f',
@@ -673,7 +692,8 @@ PALETTES = {'default': {'label': 'Blue (default)', 'swatch': '#1565c0', 'vars': 
                    '--muted': '#8b5f74',
                    '--surface': '#ffffff',
                    '--surface-2': '#ffe1ee'}},
- 'warm': {'label': 'Warm',
+ 'warm': {'dark': {},
+          'label': 'Warm',
           'swatch': '#b5651d',
           'vars': {'--bg': '#fdf6ee',
                    '--blue': '#b5651d',
@@ -740,6 +760,7 @@ def _look() -> dict:
     except Exception:
         pass
     return {"key": key, "vars": PALETTES.get(key, {}).get("vars", {}),
+            "dark": PALETTES.get(key, {}).get("dark", {}),
             "density": density, "layout": layout, "logo": logo, "note": note}
 
 

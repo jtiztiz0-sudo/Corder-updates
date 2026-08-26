@@ -26,6 +26,25 @@
       {% for k, v in LOOK.vars.items() %}{{ k }}: {{ v }};
       {% endfor %}
     }
+    {%- if LOOK.dark %}
+    {#- The night half, LAYERED ON TOP of the block above rather than
+      replacing it. That ordering is deliberate: a palette with no dark set
+      has to keep painting all four states, or on a machine set to dark the
+      stylesheet's own :root:not([data-theme=light]) block -- which is MORE
+      specific than a bare :root -- wins and the colour silently does
+      nothing. Same shape, later in source, so this wins where it applies
+      and changes nothing where it doesn't. -#}
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        {% for k, v in LOOK.dark.items() %}{{ k }}: {{ v }};
+        {% endfor %}
+      }
+    }
+    :root[data-theme="dark"] {
+      {% for k, v in LOOK.dark.items() %}{{ k }}: {{ v }};
+      {% endfor %}
+    }
+    {%- endif %}
   </style>
   <script>
     // apply the saved theme before first paint, so there's no flash of the
