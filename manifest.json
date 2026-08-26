@@ -1,5 +1,5 @@
 {
-  "version": 63,
+  "version": 64,
   "published": "2026-08-25 23:50",
   "files": {
     "app.py": {
@@ -67,8 +67,8 @@
       "size": 1297
     },
     "templates/look.html": {
-      "sha256": "f56f3e16689ff53d3e4a2c8378c7f76188f9317888149281be4a4c889e5577af",
-      "size": 7785
+      "sha256": "c5cbd7a7b1b58fa167e8f7d3daeed135a270d6700890c02e71e2954cd82644c2",
+      "size": 8325
     },
     "static/style.css": {
       "sha256": "497a7411dfeeaad3bc36ba1121b7a87d5f85697be16583527d5afde6a3c0be35",

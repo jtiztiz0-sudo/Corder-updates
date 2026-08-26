@@ -107,23 +107,33 @@
   // them cannot express "this palette has none": picking Blue (default) set
   // nothing, so the previous palette's block stayed and the page did not
   // change. Replacing the block is what a reload would do, for every palette.
-  function paint(vars) {
+  function paint(vars, dark) {
     var block = document.getElementById("themeVars");
     if (!block) return;
-    var body = "";
-    Object.keys(vars || {}).forEach(function (k) {
-      body += k + ": " + vars[k] + ";";
-    });
-    block.textContent =
+    function decls(o) {
+      var body = "";
+      Object.keys(o || {}).forEach(function (k) { body += k + ": " + o[k] + ";"; });
+      return body;
+    }
+    // exactly what the template writes on a reload, dark half and all --
+    // otherwise picking a colour and reloading would give two different
+    // pages, and the difference would only show on a machine set to dark
+    var css =
       ':root, :root:not([data-theme="light"]),' +
-      ':root[data-theme="dark"], :root[data-theme="light"] {' + body + "}";
+      ':root[data-theme="dark"], :root[data-theme="light"] {' + decls(vars) + "}";
+    if (dark && Object.keys(dark).length) {
+      css += '@media (prefers-color-scheme: dark){' +
+             ':root:not([data-theme="light"]){' + decls(dark) + "}}" +
+             ':root[data-theme="dark"]{' + decls(dark) + "}";
+    }
+    block.textContent = css;
   }
 
   document.getElementById("lookThemes").addEventListener("click", function (e) {
     var b = e.target.closest("[data-theme-key]");
     if (!b) return;
     save("theme", b.dataset.themeKey, function (d) {
-      paint(d.look.vars);
+      paint(d.look.vars, d.look.dark);
       Array.prototype.forEach.call(this.children, function (x) {
         x.classList.remove("on"); });
       b.classList.add("on");
