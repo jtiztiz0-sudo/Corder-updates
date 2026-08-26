@@ -639,6 +639,147 @@ def connection_check():
             "version": local_version()}
 
 
+# ---- how this app is painted -------------------------------------------
+# Every palette, so the app can repaint itself with nothing to fetch and no
+# code generation on their machine. Injected from the generator's own THEMES.
+PALETTES = {'blue': {'label': 'Blue',
+          'swatch': '#1b4f8a',
+          'vars': {'--bg': '#0f2340',
+                   '--blue': '#5aa9f0',
+                   '--ink': '#e8eef7',
+                   '--line': '#27507f',
+                   '--muted': '#9db3cf',
+                   '--shadow': 'none',
+                   '--surface': '#16304f',
+                   '--surface-2': '#1d3d63'}},
+ 'default': {'label': 'Default', 'swatch': '#1565c0', 'vars': {}},
+ 'green': {'label': 'Green',
+           'swatch': '#1f5c3d',
+           'vars': {'--bg': '#0f2318',
+                    '--blue': '#4fc98a',
+                    '--green': '#5fd68f',
+                    '--ink': '#e7f2ea',
+                    '--line': '#28553c',
+                    '--muted': '#9dbfab',
+                    '--shadow': 'none',
+                    '--surface': '#163024',
+                    '--surface-2': '#1d3f2f'}},
+ 'mono': {'label': 'Grey',
+          'swatch': '#5b6470',
+          'vars': {'--bg': '#f2f3f5',
+                   '--blue': '#4a5568',
+                   '--ink': '#23272c',
+                   '--line': '#d6d9dd',
+                   '--muted': '#6b7280',
+                   '--surface': '#ffffff',
+                   '--surface-2': '#e8eaed'}},
+ 'pink': {'label': 'Pink',
+          'swatch': '#e5559a',
+          'vars': {'--bg': '#fff0f6',
+                   '--blue': '#c9266f',
+                   '--green': '#2e7d5b',
+                   '--ink': '#3a1d2b',
+                   '--line': '#f3c2d8',
+                   '--muted': '#8b5f74',
+                   '--surface': '#ffffff',
+                   '--surface-2': '#ffe1ee'}},
+ 'warm': {'label': 'Warm',
+          'swatch': '#b5651d',
+          'vars': {'--bg': '#fdf6ee',
+                   '--blue': '#b5651d',
+                   '--ink': '#3b2a1a',
+                   '--line': '#e6d2ba',
+                   '--muted': '#8a6f56',
+                   '--surface': '#ffffff',
+                   '--surface-2': '#f6e9da'}}}
+
+# Real need, this one: a man in a truck with gloves on, and an owner who is 58
+# and squinting, want opposite things from the same screen.
+DENSITIES = {"normal": "Normal", "compact": "Compact", "large": "Big text"}
+
+
+def _look() -> dict:
+    """The palette and text size in use right now.
+
+    Their choice normally wins. It is cleared whenever JTS sends the app out
+    again -- modules.py is rewritten every time, so BUSINESS['generated']
+    moves, and that is the signal. Deliberate: the look JTS sets on a delivery
+    is the one they get. A one-time note tells them it happened, so it can
+    never look like the app changed colour by itself.
+
+    Never raises -- this runs on every page, and a settings read must not be
+    able to stop one rendering.
+    """
+    # same accessor the rest of this file uses -- modules is imported, the
+    # names inside it are not
+    biz = getattr(modules, "BUSINESS", {}) or {}
+    key = biz.get("theme_key") or "default"
+    density, note = "normal", False
+    try:
+        stamp = str(biz.get("generated") or "")
+        if stamp and _state("look_stamp") != stamp:
+            if _state("look_theme") or _state("look_density"):
+                note = True                 # they had picked something
+            _set_state("look_stamp", stamp)
+            _set_state("look_theme", "")
+            _set_state("look_density", "")
+        theirs = _state("look_theme")
+        if theirs in PALETTES:
+            key = theirs
+        d = _state("look_density")
+        if d in DENSITIES:
+            density = d
+    except Exception:
+        pass
+    return {"key": key, "vars": PALETTES.get(key, {}).get("vars", {}),
+            "density": density, "note": note}
+
+
+@app.context_processor
+def _look_ctx():
+    return {"LOOK": _look(), "PALETTES": PALETTES, "DENSITIES": DENSITIES}
+
+
+@app.route("/look")
+def look_page():
+    """Colours and text size. Reached by the gear in the header."""
+    return render_template("look.html")
+
+
+@app.route("/look", methods=["POST"])
+def look_save():
+    """Save a choice. No Save button and no restart -- the next page render
+    uses it, the same way the dark-mode toggle already behaves."""
+    payload = request.get_json(silent=True) or {}
+    what = (payload.get("what") or "").strip()
+    value = (payload.get("value") or "").strip()
+    if what == "theme":
+        if value not in PALETTES:
+            return {"ok": False, "error": "no such colour"}, 400
+        _set_state("look_theme", value)
+    elif what == "density":
+        if value not in DENSITIES:
+            return {"ok": False, "error": "no such size"}, 400
+        _set_state("look_density", value)
+    elif what == "reset":
+        _set_state("look_theme", "")
+        _set_state("look_density", "")
+    else:
+        return {"ok": False, "error": "nothing to change"}, 400
+    return {"ok": True, "look": _look()}
+
+
+@app.route("/look/seen", methods=["POST"])
+def look_seen():
+    """Tick off the "JTS updated your colours" note so it shows once."""
+    try:
+        biz = getattr(modules, "BUSINESS", {}) or {}
+        _set_state("look_stamp", str(biz.get("generated") or ""))
+    except Exception:
+        pass
+    return {"ok": True}
+
+
 @app.route("/about")
 def about():
     return render_template("about.html", kind=COPY_KIND, hosted=hosted(),

@@ -1,15 +1,15 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-density="{{ LOOK.density }}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{ BUSINESS.name }}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-  {% if BUSINESS.theme %}
+  {% if LOOK.vars %}
   <style>
     :root, :root:not([data-theme="light"]),
     :root[data-theme="dark"], :root[data-theme="light"] {
-      {% for k, v in BUSINESS.theme.items() %}{{ k }}: {{ v }};
+      {% for k, v in LOOK.vars.items() %}{{ k }}: {{ v }};
       {% endfor %}
     }
   </style>

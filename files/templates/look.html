@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}Look and feel — {{ BUSINESS.name }}{% endblock %}
+{% block content %}
+
+<h1>Look and feel</h1>
+<p class="muted small" style="margin-top:2px">
+  Change it however you like — it saves as you pick, and only changes how it
+  looks. Nothing you have typed in is affected.</p>
+
+<div class="card">
+  <h2 class="look-h">Colour</h2>
+  <div class="look-grid" id="lookThemes">
+    {% for key, pal in PALETTES.items() %}
+    <button type="button" class="look-swatch {{ 'on' if key == LOOK.key }}"
+            data-theme-key="{{ key }}" title="{{ pal.label }}">
+      <span class="look-dot" style="background:{{ pal.swatch }}"></span>
+      <span class="look-name">{{ pal.label }}</span>
+    </button>
+    {% endfor %}
+  </div>
+</div>
+
+<div class="card">
+  <h2 class="look-h">Text size</h2>
+  <p class="muted small" style="margin:0 0 10px">
+    Bigger if you are reading it across the shop. Smaller if you want more on
+    the screen at once.</p>
+  <div class="look-grid" id="lookDensity">
+    {% for key, label in DENSITIES.items() %}
+    <button type="button" class="look-size {{ 'on' if key == LOOK.density }}"
+            data-density-key="{{ key }}">{{ label }}</button>
+    {% endfor %}
+  </div>
+</div>
+
+<p class="muted tiny">
+  <a href="#" id="lookReset">Put it back how it came</a>
+  &nbsp;·&nbsp; <span id="lookSaid"></span></p>
+
+<script>
+(function () {
+  var said = document.getElementById("lookSaid");
+
+  function save(what, value, then) {
+    fetch("/look", {method: "POST",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify({what: what, value: value})})
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (!d.ok) { said.textContent = d.error || "That didn't save."; return; }
+        said.textContent = "saved";
+        if (then) then(d);
+      })
+      .catch(function () { said.textContent = "That didn't save."; });
+  }
+
+  // Repaint straight away rather than waiting for a reload -- picking a colour
+  // and seeing nothing happen for a second feels broken.
+  function paint(vars) {
+    var root = document.documentElement;
+    Object.keys(vars || {}).forEach(function (k) {
+      root.style.setProperty(k, vars[k]);
+    });
+  }
+
+  document.getElementById("lookThemes").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-theme-key]");
+    if (!b) return;
+    save("theme", b.dataset.themeKey, function (d) {
+      paint(d.look.vars);
+      Array.prototype.forEach.call(this.children, function (x) {
+        x.classList.remove("on"); });
+      b.classList.add("on");
+    }.bind(this));
+  });
+
+  document.getElementById("lookDensity").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-density-key]");
+    if (!b) return;
+    save("density", b.dataset.densityKey, function (d) {
+      document.documentElement.setAttribute("data-density", d.look.density);
+      Array.prototype.forEach.call(this.children, function (x) {
+        x.classList.remove("on"); });
+      b.classList.add("on");
+    }.bind(this));
+  });
+
+  document.getElementById("lookReset").addEventListener("click", function (e) {
+    e.preventDefault();
+    save("reset", "", function () { location.reload(); });
+  });
+})();
+</script>
+
+{% endblock %}

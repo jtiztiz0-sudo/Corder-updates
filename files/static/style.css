@@ -314,3 +314,43 @@ tr.just-found{outline:2px solid var(--accent);outline-offset:-2px}
   .cal-chip{font-size:10px}
   .cal-line-t{flex:0 0 62px}
 }
+
+/* ---- Look and feel: their colour and text size ---- */
+/* Density rides on <html data-density>, the same way dark mode rides on
+   data-theme. One number drives it, so every screen scales together and
+   nothing has to be sized twice. */
+:root{--scale:1}
+:root[data-density="compact"]{--scale:.88}
+:root[data-density="large"]{--scale:1.18}
+body{font-size:calc(15px * var(--scale))}
+:root[data-density="large"] .tbl td,
+:root[data-density="large"] .tbl th{padding-top:calc(10px * var(--scale));
+  padding-bottom:calc(10px * var(--scale))}
+:root[data-density="compact"] .tbl td,
+:root[data-density="compact"] .tbl th{padding-top:4px;padding-bottom:4px}
+:root[data-density="large"] input,
+:root[data-density="large"] select,
+:root[data-density="large"] textarea,
+:root[data-density="large"] button{font-size:calc(15px * var(--scale));
+  padding-top:calc(8px * var(--scale));padding-bottom:calc(8px * var(--scale))}
+
+.look-h{font-size:15px;margin:0 0 10px}
+.look-grid{display:flex;flex-wrap:wrap;gap:9px}
+/* the global button rule would paint these solid blue with 9x16 padding */
+.look-swatch,.look-size{display:flex;align-items:center;gap:8px;
+  background:var(--surface-2);border:2px solid var(--line);border-radius:10px;
+  padding:9px 13px;cursor:pointer;font-weight:600;font-size:13.5px;
+  color:var(--ink)}
+.look-swatch:hover,.look-size:hover{border-color:var(--accent);filter:none;
+  background:var(--surface-2)}
+.look-swatch.on,.look-size.on{border-color:var(--accent);
+  box-shadow:inset 0 0 0 1px var(--accent)}
+.look-dot{width:19px;height:19px;border-radius:50%;
+  border:1px solid rgba(0,0,0,.25);flex:0 0 auto}
+
+.look-note{display:flex;align-items:center;gap:10px;margin:0 auto;
+  max-width:1100px;padding:9px 14px;font-size:13px;
+  background:var(--surface-2);border-bottom:1px solid var(--line)}
+.look-note button{margin-left:auto;background:none;border:0;padding:0 4px;
+  color:var(--muted);font-size:14px;line-height:1;font-weight:400;
+  cursor:pointer}

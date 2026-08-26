@@ -1,11 +1,11 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-density="{{ LOOK.density }}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}{{ BUSINESS.name }}{% endblock %}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-  {% if BUSINESS.theme %}
+  {% if LOOK.vars %}
   {#- this business's own colours.
       :root:not([data-theme="light"]) is NOT optional. With no data-theme set
       -- the default, before anyone touches the toggle -- the only selector
@@ -19,7 +19,7 @@
     :root,
     :root:not([data-theme="light"]),
     :root[data-theme="dark"], :root[data-theme="light"] {
-      {% for k, v in BUSINESS.theme.items() %}{{ k }}: {{ v }};
+      {% for k, v in LOOK.vars.items() %}{{ k }}: {{ v }};
       {% endfor %}
     }
   </style>
@@ -60,10 +60,30 @@
        arrives -- and it is the first thing to try if it ever goes odd. #}
     <button type="button" id="reloadBtn" class="theme-btn"
             title="Restart the app — picks up any update, and fixes most oddities">↻</button>
+    {# Colours and text size. A gear next to the dark-mode moon, because that
+       is where anyone looks for it -- not buried in the About page. #}
+    <a href="{{ url_for('look_page') }}" class="theme-btn"
+       title="Colours and text size">&#9881;</a>
     <button type="button" id="themeBtn" class="theme-btn" title="Toggle dark mode">
       <span id="themeIcon">☀</span>
     </button>
   </header>
+  {% if LOOK.note %}
+  {#- JTS sent the app out again, which resets the look to the one he set.
+      Said out loud ONCE so it can never look like the app changed colour by
+      itself -- that is the one real cost of his-choice-wins. -#}
+  <div class="look-note" id="lookNote">
+    Your colours were set back to the ones JTS sent.
+    <a href="{{ url_for('look_page') }}">Change them again</a>
+    <button type="button" id="lookNoteX" title="Dismiss">&#10005;</button>
+  </div>
+  <script>
+    document.getElementById("lookNoteX").addEventListener("click", function () {
+      document.getElementById("lookNote").style.display = "none";
+      fetch("/look/seen", {method: "POST"});
+    });
+  </script>
+  {% endif %}
   <main>{% block content %}{% endblock %}</main>
   {# The only way to the About page, and the only way to removing the app.
      Small, grey, right at the bottom -- findable when you go looking, never
