@@ -1,10 +1,10 @@
 {
-  "version": 55,
-  "published": "2026-08-25 19:58",
+  "version": 56,
+  "published": "2026-08-25 20:22",
   "files": {
     "app.py": {
-      "sha256": "97e3a64d8a8a0ed4e6255cfa8bf33bff1fbdcbdd572061ea84f015b2108eb599",
-      "size": 51567
+      "sha256": "2462d233e1e89d6bd2620d34ad0ca529fa374c8c705f610f8c25fa5f84f85c93",
+      "size": 53846
     },
     "db.py": {
       "sha256": "6bd3c9ca520c8ece8a3a26acdc93f4d6c9bfcd500b5ec8f559ddbfaf4a96e0d1",
@@ -39,8 +39,8 @@
       "size": 3261
     },
     "templates/base.html": {
-      "sha256": "8704ef6b0cb2151eaf2ca6c99638ed9c2fe134516e1400d88e959b1f1b969b87",
-      "size": 7530
+      "sha256": "c75ee64368e1cda646f0a617f3dd12ed27154c1048373fee2a9683b41f1e0455",
+      "size": 7558
     },
     "templates/dashboard.html": {
       "sha256": "f49086c669b8b3fdff4b85dac351ec56f76297eebeed337de4d3c889222669e9",
@@ -55,24 +55,24 @@
       "size": 1911
     },
     "templates/locked.html": {
-      "sha256": "fbd42ebeda6391f7a4cbd81b698058c013294a0937eb977151f0d78da0fe4761",
-      "size": 2174
+      "sha256": "ecde460c29608e637def1a26a942fbab7f41116a1d6ea3cb639fdb2eab6af78a",
+      "size": 2206
     },
     "templates/about.html": {
       "sha256": "65532699822fbea006ffcf35e459a916e82315bafecc9445541bb6a84a1634a5",
       "size": 10842
     },
     "templates/login.html": {
-      "sha256": "d072ed3c7d97e31166c26847a632002e65c4acce6f5cec705a6265fa5febd7a7",
-      "size": 1218
+      "sha256": "1e0e912cd8ec030b215acf9dbba76d8407d4a7a687a75ec5a20aa0c2f2f0661b",
+      "size": 1250
     },
     "templates/look.html": {
-      "sha256": "c8f375ffe3ddd520a8a77cc3ffea19a89227866da7b0be4da5d48d7055303717",
-      "size": 3308
+      "sha256": "ca730830ffd37b6a149c31ae18e36dbefe2df1f2e966230aab37d104edc48601",
+      "size": 7281
     },
     "static/style.css": {
-      "sha256": "9d6961f98238525fd29c5f7436f8f3c9465834c2e79020ff1ce9b8495e531f92",
-      "size": 18860
+      "sha256": "6d343595f7e2f7d4445ce0d1318ed85a8e0b5368460a204b85fceba4da613ac7",
+      "size": 21114
     }
   },
   "apps": {
@@ -80,7 +80,7 @@
       "version": 7,
       "files": {
         "modules.py": {
-          "sha256": "c5e86745db19a423104fb2035ea05d4a50bbb48660d39f03d66a6750db02282d",
+          "sha256": "7e9a6301effc293707f58e3fffb87512869107510b49827af39eb5676de2b12b",
           "size": 12025
         }
       }

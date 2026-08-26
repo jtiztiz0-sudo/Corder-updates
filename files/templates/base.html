@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-density="{{ LOOK.density }}">
+<html lang="en" data-density="{{ LOOK.density }}" data-layout="{{ LOOK.layout }}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -38,7 +38,7 @@
 <body>
   <header>
     <div class="brand"><a href="{{ url_for('dashboard') }}">
-      {%- if BUSINESS.logo %}<img class="brand-logo"
+      {%- if LOOK.logo %}<img class="brand-logo"
         src="{{ url_for('static', filename='logo.png') }}" alt="">{% endif -%}
       <span>{{ BUSINESS.name }}</span></a></div>
     <nav>

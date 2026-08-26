@@ -354,3 +354,45 @@ body{font-size:calc(15px * var(--scale))}
 .look-note button{margin-left:auto;background:none;border:0;padding:0 4px;
   color:var(--muted);font-size:14px;line-height:1;font-weight:400;
   cursor:pointer}
+
+/* ---- the three layouts. CSS only, over ONE set of markup: a template per
+   layout would mean building every future screen three times. ---- */
+:root[data-layout="side"] header{position:fixed;top:0;left:0;bottom:0;
+  width:186px;flex-direction:column;align-items:stretch;gap:10px;
+  padding:16px 12px;border-right:1px solid var(--line);border-bottom:0;
+  overflow-y:auto;z-index:5}
+:root[data-layout="side"] header nav{flex-direction:column;align-items:stretch;
+  gap:3px;margin:6px 0 0}
+:root[data-layout="side"] header nav a{width:100%}
+:root[data-layout="side"] .brand{margin-bottom:4px}
+:root[data-layout="side"] .theme-btn,
+:root[data-layout="side"] .tool-tab{margin-left:0}
+:root[data-layout="side"] main{margin-left:186px}
+:root[data-layout="side"] .copy-flag{margin-left:186px}
+@media (max-width: 820px){
+  /* not enough width for a side menu on a phone -- fall back to the top one */
+  :root[data-layout="side"] header{position:static;width:auto;
+    flex-direction:row;align-items:center;border-right:0;
+    border-bottom:1px solid var(--line)}
+  :root[data-layout="side"] header nav{flex-direction:row}
+  :root[data-layout="side"] main,
+  :root[data-layout="side"] .copy-flag{margin-left:0}
+}
+
+/* Big tiles: the front page becomes something you can hit with a glove on. */
+:root[data-layout="tiles"] .dash-grid{grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
+  gap:16px}
+:root[data-layout="tiles"] .dash-card{padding:26px 22px;min-height:132px}
+:root[data-layout="tiles"] .dash-card .dc-icon{font-size:34px}
+:root[data-layout="tiles"] .dash-card .dc-name{font-size:19px}
+:root[data-layout="tiles"] header nav a{padding:9px 15px;font-size:14.5px}
+
+/* their own logo, on the Look and feel page */
+.look-logo{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.look-logo-img{max-height:46px;max-width:190px;object-fit:contain;
+  background:repeating-conic-gradient(#00000010 0% 25%, transparent 0% 50%)
+    50% / 14px 14px;border:1px solid var(--line);border-radius:7px;padding:4px}
+.look-pick{display:inline-block;background:var(--surface-2);
+  border:2px solid var(--line);border-radius:10px;padding:9px 13px;
+  cursor:pointer;font-weight:600;font-size:13.5px;color:var(--ink)}
+.look-pick:hover{border-color:var(--accent)}

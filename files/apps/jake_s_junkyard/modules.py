@@ -37,7 +37,7 @@ BUSINESS = {'name': 'Conrad is handsome asf',
            '--blue': '#c9266f',
            '--green': '#2e7d5b'},
  'theme_key': 'pink',
- 'generated': '2026-08-25 19:58'}
+ 'generated': '2026-08-25 20:22'}
 
 MODULES = [{'key': 'scheduling',
   'label': 'Schedule',

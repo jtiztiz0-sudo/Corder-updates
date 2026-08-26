@@ -697,6 +697,13 @@ PALETTES = {'blue': {'label': 'Blue',
 # and squinting, want opposite things from the same screen.
 DENSITIES = {"normal": "Normal", "compact": "Compact", "large": "Big text"}
 
+# Three ways to arrange the same screen. CSS only, over ONE set of markup --
+# separate templates per layout would mean every feature built from here on
+# has to be built three times.
+LAYOUTS = {"top": "Menu across the top",
+           "side": "Menu down the side",
+           "tiles": "Big tiles"}
+
 
 def _look() -> dict:
     """The palette and text size in use right now.
@@ -715,6 +722,8 @@ def _look() -> dict:
     biz = getattr(modules, "BUSINESS", {}) or {}
     key = biz.get("theme_key") or "default"
     density, note = "normal", False
+    layout = "top"
+    logo = bool(biz.get("logo"))
     try:
         stamp = str(biz.get("generated") or "")
         if stamp and _state("look_stamp") != stamp:
@@ -723,21 +732,31 @@ def _look() -> dict:
             _set_state("look_stamp", stamp)
             _set_state("look_theme", "")
             _set_state("look_density", "")
+            _set_state("look_layout", "")
+            # their own logo goes too -- a delivery carries the one JTS set,
+            # and half-and-half would be worse than either
+            _set_state("look_logo", "")
         theirs = _state("look_theme")
         if theirs in PALETTES:
             key = theirs
         d = _state("look_density")
         if d in DENSITIES:
             density = d
+        lay = _state("look_layout")
+        if lay in LAYOUTS:
+            layout = lay
+        if _state("look_logo") == "1":
+            logo = True
     except Exception:
         pass
     return {"key": key, "vars": PALETTES.get(key, {}).get("vars", {}),
-            "density": density, "note": note}
+            "density": density, "layout": layout, "logo": logo, "note": note}
 
 
 @app.context_processor
 def _look_ctx():
-    return {"LOOK": _look(), "PALETTES": PALETTES, "DENSITIES": DENSITIES}
+    return {"LOOK": _look(), "PALETTES": PALETTES, "DENSITIES": DENSITIES,
+            "LAYOUTS": LAYOUTS}
 
 
 @app.route("/look")
@@ -761,12 +780,52 @@ def look_save():
         if value not in DENSITIES:
             return {"ok": False, "error": "no such size"}, 400
         _set_state("look_density", value)
+    elif what == "layout":
+        if value not in LAYOUTS:
+            return {"ok": False, "error": "no such layout"}, 400
+        _set_state("look_layout", value)
     elif what == "reset":
         _set_state("look_theme", "")
         _set_state("look_density", "")
+        _set_state("look_layout", "")
     else:
         return {"ok": False, "error": "nothing to change"}, 400
     return {"ok": True, "look": _look()}
+
+
+@app.route("/look/logo", methods=["POST"])
+def look_logo():
+    """Put their own logo in the header.
+
+    The FIRST BYTES decide whether it is really a picture -- a filename is
+    whatever the sender says it is. Written to the one place the header reads,
+    so nothing has to be told where it went.
+    """
+    f = request.files.get("logo")
+    if f is None:
+        return {"ok": False, "error": "no picture"}, 400
+    blob = f.read(4 * 1024 * 1024 + 1)
+    if len(blob) > 4 * 1024 * 1024:
+        return {"ok": False, "error": "that picture is too big (4MB limit)"}, 400
+    if not _sniff(blob):
+        return {"ok": False, "error": "that is not a picture"}, 400
+    target = os.path.join(HERE, "static", "logo.png")
+    try:
+        os.makedirs(os.path.dirname(target), exist_ok=True)
+        with open(target, "wb") as fh:
+            fh.write(blob)
+        _set_state("look_logo", "1")
+    except OSError as exc:
+        return {"ok": False, "error": str(exc)[:120]}, 500
+    return {"ok": True}
+
+
+@app.route("/look/logo/remove", methods=["POST"])
+def look_logo_remove():
+    """Take it back off. The file stays -- an update only ever writes, so a
+    flag is what actually hides it, the same way BUSINESS['logo'] works."""
+    _set_state("look_logo", "")
+    return {"ok": True}
 
 
 @app.route("/look/seen", methods=["POST"])
