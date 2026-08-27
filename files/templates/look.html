@@ -167,7 +167,7 @@
   // the corner drives rather than keeping a second copy of the answer.
   var mode = document.getElementById("lookMode");
   function markMode() {
-    var now = localStorage.getItem("theme") || "auto";
+    var now = document.documentElement.getAttribute("data-theme") || "auto";
     Array.prototype.forEach.call(mode.children, function (b) {
       b.classList.toggle("on", b.dataset.mode === now);
     });
@@ -177,14 +177,14 @@
     var b = e.target.closest("[data-mode]");
     if (!b) return;
     if (b.dataset.mode === "auto") {
-      localStorage.removeItem("theme");
       document.documentElement.removeAttribute("data-theme");
     } else {
-      localStorage.setItem("theme", b.dataset.mode);
       document.documentElement.setAttribute("data-theme", b.dataset.mode);
     }
     markMode();
-    said.textContent = "saved";
+    // through the same save() every other setting on this page uses, so it
+    // is remembered next time the app is opened
+    save("mode", b.dataset.mode);
   });
 
   var pick = document.getElementById("logoFile");

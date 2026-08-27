@@ -659,10 +659,7 @@ PALETTES = {'default': {'dark': {'--bg': '#0f1a2e',
                       '--muted': '#5d7292',
                       '--surface': '#ffffff',
                       '--surface-2': '#e3ecf9'}},
- 'green': {'dark': {},
-           'label': 'Green',
-           'swatch': '#1f5c3d',
-           'vars': {'--bg': '#0f2318',
+ 'green': {'dark': {'--bg': '#0f2318',
                     '--blue': '#4fc98a',
                     '--green': '#5fd68f',
                     '--ink': '#e7f2ea',
@@ -670,8 +667,25 @@ PALETTES = {'default': {'dark': {'--bg': '#0f1a2e',
                     '--muted': '#9dbfab',
                     '--shadow': 'none',
                     '--surface': '#163024',
-                    '--surface-2': '#1d3f2f'}},
- 'mono': {'dark': {},
+                    '--surface-2': '#1d3f2f'},
+           'label': 'Green',
+           'swatch': '#1f5c3d',
+           'vars': {'--bg': '#eef7f1',
+                    '--blue': '#1f6b45',
+                    '--green': '#1f6b45',
+                    '--ink': '#12301f',
+                    '--line': '#c3ddce',
+                    '--muted': '#537a68',
+                    '--surface': '#ffffff',
+                    '--surface-2': '#dfeee6'}},
+ 'mono': {'dark': {'--bg': '#1a1c1f',
+                   '--blue': '#aab4c0',
+                   '--ink': '#e8eaed',
+                   '--line': '#3a3f45',
+                   '--muted': '#9aa3ad',
+                   '--shadow': 'none',
+                   '--surface': '#232629',
+                   '--surface-2': '#2d3135'},
           'label': 'Grey',
           'swatch': '#5b6470',
           'vars': {'--bg': '#f2f3f5',
@@ -681,7 +695,15 @@ PALETTES = {'default': {'dark': {'--bg': '#0f1a2e',
                    '--muted': '#6b7280',
                    '--surface': '#ffffff',
                    '--surface-2': '#e8eaed'}},
- 'pink': {'dark': {},
+ 'pink': {'dark': {'--bg': '#231019',
+                   '--blue': '#ff5fa2',
+                   '--green': '#5fd6a0',
+                   '--ink': '#ffe8f2',
+                   '--line': '#4d2739',
+                   '--muted': '#c79ab0',
+                   '--shadow': 'none',
+                   '--surface': '#2f1622',
+                   '--surface-2': '#3d1d2d'},
           'label': 'Pink',
           'swatch': '#e5559a',
           'vars': {'--bg': '#fff0f6',
@@ -692,7 +714,14 @@ PALETTES = {'default': {'dark': {'--bg': '#0f1a2e',
                    '--muted': '#8b5f74',
                    '--surface': '#ffffff',
                    '--surface-2': '#ffe1ee'}},
- 'warm': {'dark': {},
+ 'warm': {'dark': {'--bg': '#1f1710',
+                   '--blue': '#e0913f',
+                   '--ink': '#f5e9db',
+                   '--line': '#4a3826',
+                   '--muted': '#bfa387',
+                   '--shadow': 'none',
+                   '--surface': '#2b2118',
+                   '--surface-2': '#392c20'},
           'label': 'Warm',
           'swatch': '#b5651d',
           'vars': {'--bg': '#fdf6ee',
@@ -733,6 +762,11 @@ def _look() -> dict:
     key = biz.get("theme_key") or "default"
     density, note = "normal", False
     layout = "top"
+    # "auto" = follow the computer. Kept HERE rather than in the browser: it
+    # used to live in localStorage under one key while the page that reads it
+    # looked for another, so it was forgotten on every reload -- and a webview
+    # on a fresh profile would lose it anyway.
+    mode = "auto"
     logo = bool(biz.get("logo"))
     try:
         stamp = str(biz.get("generated") or "")
@@ -743,6 +777,7 @@ def _look() -> dict:
             _set_state("look_theme", "")
             _set_state("look_density", "")
             _set_state("look_layout", "")
+            _set_state("look_mode", "")
             # their own logo goes too -- a delivery carries the one JTS set,
             # and half-and-half would be worse than either
             _set_state("look_logo", "")
@@ -755,13 +790,17 @@ def _look() -> dict:
         lay = _state("look_layout")
         if lay in LAYOUTS:
             layout = lay
+        md = _state("look_mode")
+        if md in ("light", "dark"):
+            mode = md
         if _state("look_logo") == "1":
             logo = True
     except Exception:
         pass
     return {"key": key, "vars": PALETTES.get(key, {}).get("vars", {}),
             "dark": PALETTES.get(key, {}).get("dark", {}),
-            "density": density, "layout": layout, "logo": logo, "note": note}
+            "density": density, "layout": layout, "mode": mode,
+            "logo": logo, "note": note}
 
 
 @app.context_processor
@@ -796,6 +835,12 @@ def look_save():
         if value not in DENSITIES:
             return {"ok": False, "error": "no such size"}, 400
         _set_state("look_density", value)
+    elif what == "mode":
+        if value not in ("light", "dark", "auto"):
+            return {"ok": False, "error": "no such mode"}, 400
+        # "auto" is stored as empty -- the absence of a choice, which is
+        # exactly what following the computer means
+        _set_state("look_mode", "" if value == "auto" else value)
     elif what == "layout":
         if value not in LAYOUTS:
             return {"ok": False, "error": "no such layout"}, 400

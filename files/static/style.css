@@ -108,7 +108,9 @@ nav a.active{color:#fff;background:var(--blue)}
 .theme-btn:hover{background:var(--bg);color:var(--blue);border-color:var(--blue)}
 
 main{max-width:1280px;margin:0 auto;padding:22px}
-h1{font-size:26px;margin:0 0 4px;font-weight:750;letter-spacing:-.02em}
+/* size is set by the density rule below -- it scales with the text-size
+   setting, so putting a fixed one here would just be overridden */
+h1{margin:0 0 4px;font-weight:750;letter-spacing:-.02em}
 h2{font-size:16px;margin:0 0 12px}
 .sub{margin:0 0 18px}
 .muted{color:var(--muted)}
@@ -348,7 +350,7 @@ tr.just-found{outline:2px solid var(--accent);outline-offset:-2px}
 body{font-size:calc(15px * var(--scale))}
 /* everything with a size follows the same one number, so the whole screen
    grows together instead of the body text growing inside fixed furniture */
-h1{font-size:calc(25px * var(--scale))}
+h1{font-size:calc(26px * var(--scale))}
 h2{font-size:calc(18px * var(--scale))}
 .card{padding:calc(18px * var(--scale))}
 .stat-num{font-size:calc(29px * var(--scale))}

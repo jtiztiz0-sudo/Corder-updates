@@ -1,5 +1,6 @@
 <!doctype html>
 <html lang="en" data-density="{{ LOOK.density }}" data-layout="{{ LOOK.layout }}"
+      {% if LOOK.mode != 'auto' %}data-theme="{{ LOOK.mode }}"{% endif %}
       data-page="{{ request.endpoint or '' }}">
 <head>
   <meta charset="utf-8">
@@ -46,16 +47,6 @@
     }
     {%- endif %}
   </style>
-  <script>
-    // apply the saved theme before first paint, so there's no flash of the
-    // wrong one. Nothing saved = follow the operating system.
-    (function () {
-      try {
-        var s = localStorage.getItem("app_theme");
-        if (s === "dark" || s === "light") document.documentElement.setAttribute("data-theme", s);
-      } catch (e) {}
-    })();
-  </script>
 </head>
 <body>
   <header>
@@ -130,7 +121,11 @@
       btn.addEventListener("click", function () {
         var next = current() === "dark" ? "light" : "dark";
         document.documentElement.setAttribute("data-theme", next);
-        try { localStorage.setItem("app_theme", next); } catch (e) {}
+        // saved where it survives the app being closed -- localStorage in a
+        // webview can start empty on the next launch
+        fetch("/look", {method: "POST",
+              headers: {"Content-Type": "application/json"},
+              body: JSON.stringify({what: "mode", value: next})}).catch(function () {});
         paint();
       });
     })();
