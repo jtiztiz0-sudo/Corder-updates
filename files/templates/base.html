@@ -61,8 +61,13 @@
   <header>
     <div class="brand"><a href="{{ url_for('dashboard') }}">
       {%- if LOOK.logo %}<img class="brand-logo"
-        src="{{ url_for('static', filename='logo.png') }}" alt="">{% endif -%}
-      <span>{{ BUSINESS.name }}</span></a></div>
+        src="{{ url_for('static', filename='logo.png') }}" alt="">
+      {%- elif BUSINESS.initials %}
+      {#- No logo of their own, so the name gets a mark instead of starting
+         flat against the edge. Same two letters as their desktop icon. -#}
+      <span class="brand-mark" aria-hidden="true">{{ BUSINESS.initials }}</span>
+      {%- endif -%}
+      <span class="brand-name">{{ BUSINESS.name }}</span></a></div>
     <nav>
       <a href="{{ url_for('dashboard') }}"
          class="{{ 'active' if request.endpoint == 'dashboard' }}">Dashboard</a>

@@ -62,8 +62,21 @@ body{margin:0;background:var(--bg);color:var(--ink);
 header{display:flex;align-items:center;gap:22px;background:var(--surface);
   border-bottom:1px solid var(--line);padding:0 22px;height:68px;
   position:sticky;top:0;z-index:5}
-.brand a{font-size:18px;font-weight:600;color:var(--ink);text-decoration:none;
-  white-space:nowrap;display:flex;align-items:center;gap:9px}
+/* The name is the first thing anyone reads, and a plain bold word sat against
+   the edge looked like a placeholder. Heavier and tighter, with the tracking
+   pulled in -- that alone is most of the difference. */
+.brand a{font-size:20px;font-weight:750;color:var(--ink);text-decoration:none;
+  white-space:nowrap;display:flex;align-items:center;gap:10px;
+  letter-spacing:-.015em}
+.brand-name{line-height:1.1}
+/* Their initials in the app's own colour, for the ones with no logo -- the
+   same two letters as their desktop icon. Sized in em so it tracks the name
+   at every text size rather than needing its own rule per density. */
+.brand-mark{display:flex;align-items:center;justify-content:center;
+  flex:0 0 auto;width:1.6em;height:1.6em;border-radius:.45em;
+  background:var(--blue);color:#fff;font-size:.62em;font-weight:800;
+  letter-spacing:.02em;line-height:1}
+.brand a:hover .brand-name{color:var(--blue)}
 /* their own logo, sat next to the name. Height-capped and width:auto so a wide
    logo and a square one both come out the same visual size; object-fit keeps
    it from being squashed whatever shape they send. */
@@ -95,7 +108,7 @@ nav a.active{color:#fff;background:var(--blue)}
 .theme-btn:hover{background:var(--bg);color:var(--blue);border-color:var(--blue)}
 
 main{max-width:1280px;margin:0 auto;padding:22px}
-h1{font-size:23px;margin:0 0 4px}
+h1{font-size:26px;margin:0 0 4px;font-weight:750;letter-spacing:-.02em}
 h2{font-size:16px;margin:0 0 12px}
 .sub{margin:0 0 18px}
 .muted{color:var(--muted)}
