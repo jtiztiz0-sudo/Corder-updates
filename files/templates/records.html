@@ -4,7 +4,7 @@
 {% macro field_input(f, value, cls, is_add) -%}
   {%- if f.html == 'textarea' -%}
     <textarea class="{{ cls }}" data-field="{{ f.name }}" rows="1"
-              placeholder="{{ f.label }}">{{ value if value is not none else '' }}</textarea>
+              placeholder="{{ f.label if is_add else '—' }}">{{ value if value is not none else '' }}</textarea>
   {%- elif f.html == 'select' -%}
     {#- the add form defaults to the first option; a saved row always keeps a
         blank escape hatch so a status can be cleared again -#}
@@ -24,7 +24,8 @@
   {%- else -%}
     <input type="{{ f.html }}" class="{{ cls }}" data-field="{{ f.name }}"
            {% if f.step %}step="{{ f.step }}"{% endif %}
-           placeholder="{{ f.label }}" value="{{ value if value is not none else '' }}">
+           placeholder="{{ f.label if is_add else '—' }}"
+           value="{{ value if value is not none else '' }}">
   {%- endif -%}
 {%- endmacro %}
 
@@ -39,7 +40,7 @@
   <input type="search" id="search" class="search" placeholder="Search…">
 </div>
 
-<div class="card">
+<div class="card add-card">
   <div class="add-grid">
     {% for f in m.fields %}{% if not f.owner_only %}
     <div class="fld{{ ' wide' if f.wide }}">
@@ -88,7 +89,9 @@
     <table class="tbl edit-tbl">
       <thead>
         <tr>
-          {% for f in m.fields %}<th>{{ f.label }}</th>{% endfor %}
+          {%- for f in m.fields %}
+          <th {% if f.html == 'number' %}class="num"{% endif %}>{{ f.label }}</th>
+          {%- endfor %}
           {% if m.show_added %}<th class="w-added">Added</th>{% endif %}
           <th class="w-del"></th>
         </tr>
@@ -123,7 +126,7 @@
             {% endif %}
           </td>
           {% else %}
-          <td>{{ field_input(f, r[f.name], 'cell', false) }}</td>
+          <td {% if f.html == 'number' %}class="num"{% endif %}>{{ field_input(f, r[f.name], 'cell', false) }}</td>
           {% endif %}
           {% endfor %}
           {# recorded by the app itself, so it's shown but never typed #}

@@ -149,17 +149,39 @@ button:hover{filter:brightness(1.08)}
   gap:10px}
 .fld.wide{grid-column:1/-1}
 .add-foot{display:flex;align-items:center;gap:10px;margin-top:12px}
+/* the records are the point of the page; the add form is a tool. Same card,
+   but set back a shade so the eye lands on the list first. */
+.add-card{background:var(--surface-2)}
+.add-card .fld label{font-size:11px;text-transform:uppercase;
+  letter-spacing:.06em;color:var(--muted);font-weight:700}
 .req{color:var(--red)}
 .err{color:var(--red);font-size:13px}
 
-/* tables */
-.tbl-wrap{overflow-x:auto}
+/* tables
+   Meant to read like a ledger: a heading rail that stays put, rows you can
+   follow across without losing your place, and nothing shouting in an empty
+   cell. The row highlight is what makes a wide table usable -- on a Staff
+   list eight columns wide, "which row am I on" is the whole problem. */
+.tbl-wrap{overflow-x:auto;border-radius:10px;border:1px solid var(--line)}
 .tbl{width:100%;border-collapse:collapse}
-.tbl th{text-align:left;font-size:11.5px;text-transform:uppercase;
-  letter-spacing:.04em;color:var(--muted);font-weight:600;
-  padding:0 6px 7px;border-bottom:1px solid var(--line)}
-.tbl td{padding:4px 6px;border-bottom:1px solid var(--line);vertical-align:middle}
-.tbl tr:last-child td{border-bottom:none}
+.tbl th{text-align:left;font-size:11px;text-transform:uppercase;
+  letter-spacing:.07em;color:var(--muted);font-weight:700;
+  padding:11px 10px;background:var(--surface-2);
+  border-bottom:1px solid var(--line);white-space:nowrap;
+  position:sticky;top:0;z-index:1}
+.tbl td{padding:3px 4px;border-bottom:1px solid var(--line);
+  vertical-align:middle}
+.tbl tbody tr:last-child td{border-bottom:none}
+.tbl tbody tr{transition:background .12s ease}
+.tbl tbody tr:hover{background:var(--surface-2)}
+/* a number reads far quicker against a right edge than a left one */
+.tbl td.num,.tbl th.num{text-align:right}
+.tbl td.num input{text-align:right}
+/* the placeholder dash: present, but never competing with real content */
+.edit-tbl ::placeholder{color:var(--muted);opacity:.35}
+/* nobody drags a one-line note out by its corner, and the grabber was the
+   scrappiest thing on the page */
+.edit-tbl textarea{resize:none}
 .edit-tbl input,.edit-tbl select,.edit-tbl textarea{border-color:transparent;
   background:transparent;padding:6px 7px}
 .edit-tbl input:hover,.edit-tbl select:hover,.edit-tbl textarea:hover{
