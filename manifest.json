@@ -1,6 +1,6 @@
 {
-  "version": 65,
-  "published": "2026-08-26 21:29",
+  "version": 66,
+  "published": "2026-08-26 21:34",
   "files": {
     "app.py": {
       "sha256": "d84846b02dd74ea6340e110b2bf54598889dbeebe84e998d9ffb2f602c27b156",
@@ -80,7 +80,7 @@
       "version": 8,
       "files": {
         "modules.py": {
-          "sha256": "71f8860f4fb3aa4b75bf107b20d92af90387ef627bf199c0e9dfa27d1041b2c0",
+          "sha256": "0ac981c4fba15ba3c063a0415ed8763f443e207382bda8a9c309d04cd2bdc491",
           "size": 12025
         }
       }
