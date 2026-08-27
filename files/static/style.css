@@ -169,6 +169,28 @@ button:hover{filter:brightness(1.08)}
 .add-close{margin-left:auto;background:none;border:0;color:var(--muted);
   font-size:15px;line-height:1;padding:2px 4px;cursor:pointer;font-weight:400}
 .add-close:hover{color:var(--red);background:none}
+/* Opening a customer. The arrow sits beside the cell rather than replacing it
+   -- turning the cell into a link would have cost the inline editing. */
+.who-cell{display:flex;align-items:center;gap:2px}
+.who-cell .cell{flex:1 1 auto;min-width:0}
+.who-go{flex:0 0 auto;color:var(--muted);text-decoration:none;font-size:12px;
+  padding:0 3px;opacity:0;pointer-events:none;transition:opacity .12s}
+tr:hover .who-go{opacity:1;pointer-events:auto}
+.who-go:hover{color:var(--blue)}
+/* the same thing on a calendar line, where the name is plain text */
+.cal-line-l.who-link{text-decoration:underline;text-underline-offset:2px;
+  text-decoration-color:var(--muted);cursor:pointer}
+.cal-line-l.who-link:hover{color:var(--blue);text-decoration-color:var(--blue)}
+/* the profile itself */
+.who-back{margin-left:auto;color:var(--muted);text-decoration:none;font-size:13px}
+.who-back:hover{color:var(--blue)}
+.who-card{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.who-facts{display:flex;gap:26px;flex-wrap:wrap}
+.who-k{display:block;font-size:11px;text-transform:uppercase;
+  letter-spacing:.07em;color:var(--muted);font-weight:700}
+.who-v{font-size:15px}
+.who-total{font-size:22px;font-weight:800}
+.who-n{font-size:12px;color:var(--muted);font-weight:600;margin-left:6px}
 .add-card .fld label{font-size:11px;text-transform:uppercase;
   letter-spacing:.06em;color:var(--muted);font-weight:700}
 .req{color:var(--red)}

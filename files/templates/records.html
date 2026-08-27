@@ -173,7 +173,15 @@
             {% endif %}
           </td>
           {% else %}
-          <td {% if f.html == 'number' %}class="num"{% endif %}>{{ field_input(f, r[f.name], 'cell', false) }}</td>
+          <td {% if f.html == 'number' %}class="num"{% endif %}>
+            {%- if f.is_who and r[f.name] -%}
+            <span class="who-cell">{{ field_input(f, r[f.name], 'cell', false) }}<a
+              class="who-go" title="Open {{ r[f.name] }}"
+              href="{{ url_for('who', name=r[f.name]) }}">↗</a></span>
+            {%- else -%}
+            {{ field_input(f, r[f.name], 'cell', false) }}
+            {%- endif -%}
+          </td>
           {% endif %}
           {% endfor %}
           {# recorded by the app itself, so it's shown but never typed #}
@@ -569,6 +577,19 @@
         var l = document.createElement("span");
         l.className = "cal-line-l";
         l.textContent = r.l;
+        // Clicking the NAME opens who they are; clicking anywhere else on the
+        // line still jumps to the record. stopPropagation is what keeps those
+        // two apart -- the line is a button and this sits inside it, so
+        // without it every profile click would also fire the jump.
+        if (r.w && r.l === r.w) {
+          l.className += " who-link";
+          l.title = "Open " + r.w;
+          l.addEventListener("click", function (e) {
+            e.stopPropagation();
+            e.preventDefault();
+            location.href = "/who/" + encodeURIComponent(r.w);
+          });
+        }
         var s = document.createElement("span");
         s.className = "cal-line-s";
         s.textContent = r.s || "";

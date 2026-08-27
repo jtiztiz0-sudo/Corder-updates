@@ -80,6 +80,66 @@ def problem_report():
         return {"ok": False, "error": str(exc)}, 500
 
 
+# Which field on each tab holds a CUSTOMER'S NAME. There are no foreign keys
+# in these apps -- a booking just carries the name as text -- so this is how a
+# person is tied together across tabs. Matching is on the name itself, which
+# means "Sarah Miller" and "sarah miller " are the same person (trimmed and
+# case-folded below) but "S. Miller" is not. That is the honest limit of it.
+CUSTOMER_FIELDS = ("customer", "client")
+
+
+def _customer_links():
+    """(module, field) for every live tab that names a customer."""
+    out = []
+    for m in modules.MODULES:
+        for f in m["fields"]:
+            if f.get("hidden"):
+                continue
+            if f["name"] in CUSTOMER_FIELDS or (m["key"] == "customers"
+                                                and f["name"] == "name"):
+                out.append((m, f))
+                break
+    return out
+
+
+def _is_customer_field(m, f):
+    return f["name"] in CUSTOMER_FIELDS or (m["key"] == "customers"
+                                            and f["name"] == "name")
+
+
+@app.route("/who/<name>")
+def who(name: str):
+    """Everything on this person, gathered from every tab that names them.
+
+    Read-only on purpose: this is a place to LOOK them up, and editing still
+    happens on the tab the record lives on. One less way to change something
+    by accident while you are on the phone to them.
+    """
+    want = (name or "").strip()
+    if not want:
+        abort(404)
+    card, groups, spent = None, [], 0.0
+    for m, f in _customer_links():
+        rows = db.query(
+            "SELECT * FROM %s WHERE LOWER(TRIM(%s)) = LOWER(TRIM(?)) "
+            "ORDER BY id DESC" % (m["table"], f["name"]), (want,))
+        if not rows:
+            continue
+        if m["key"] == "customers":
+            card = rows[0]                      # their own details
+            continue
+        groups.append({"m": m, "rows": rows})
+        sf = m.get("sum_field")
+        if sf:
+            for r in rows:
+                try:
+                    spent += float(r[sf] or 0)
+                except (TypeError, ValueError, IndexError):
+                    pass
+    return render_template("who.html", name=want, card=card, groups=groups,
+                           spent=spent, cust=modules.by_key("customers"))
+
+
 @app.template_filter("shortdate")
 def _shortdate(value):
     """2026-08-05 16:04 -> "5 Aug". A different year keeps it: "5 Aug 2025".
@@ -1405,14 +1465,33 @@ def _cal_rows(m, rows):
                 said.append(str(v).strip())
             if len(said) == 2:
                 break
+        # "w" is the CUSTOMER on this row, if the tab has one. Sent
+        # separately from the label on purpose: on Schedule the label happens
+        # to be the customer, but on Jobs it is the job title -- so the page
+        # must be told who the person is rather than assuming the first
+        # wordy field is one.
+        who = ""
+        for f in m["fields"]:
+            if _is_customer_field(m, f):
+                who = str(r[f["name"]] or "").strip()
+                break
         out.append({
             "id": r["id"], "d": day,
             "t": (r[tf] or "") if tf else "",
             "l": said[0] if said else ("#%s" % r["id"]),
             "s": said[1] if len(said) > 1 else "",
             "st": (r[sf] or "") if sf else "",
+            "w": who,
         })
     return out
+
+
+def _mark_who(m):
+    """Tag the field that names a customer, so the page can offer a way in
+    without having to know the rule itself."""
+    for f in m["fields"]:
+        f["is_who"] = _is_customer_field(m, f)
+    return m
 
 
 @app.route("/m/<key>")
@@ -1421,6 +1500,7 @@ def records(key: str):
     rows = db.query("SELECT * FROM %s ORDER BY %s" % (m["table"], m["sort"]))
     rows, retired = _split_archive(m, rows)
     total = _sum(m) if m["sum_field"] else None
+    _mark_who(m)                 # so the page can offer a way into a profile
     return render_template("records.html", m=m, rows=rows, retired=retired,
                            total=total, cal=_cal_rows(m, rows),
                            cal_first=m["key"] in CAL_FIRST)

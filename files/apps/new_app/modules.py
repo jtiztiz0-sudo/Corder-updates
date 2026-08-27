@@ -36,7 +36,7 @@ BUSINESS = {'name': '2men and a truck',
            '--blue': '#1565c0'},
  'theme_key': 'default',
  'initials': '2T',
- 'generated': '2026-08-26 22:42'}
+ 'generated': '2026-08-26 22:58'}
 
 MODULES = [{'key': 'customers',
   'label': 'Customers',

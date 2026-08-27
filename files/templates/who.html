@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}{{ name }} — {{ BUSINESS.name }}{% endblock %}
+{% block content %}
+
+<div class="page-head">
+  <h1>{{ name }}</h1>
+  <a class="who-back" href="{{ request.referrer or url_for('dashboard') }}">← Back</a>
+</div>
+
+{% if card %}
+<div class="card who-card">
+  <div class="who-facts">
+    {% for f in cust.fields if f.name != 'name' and not f.hidden and card[f.name] %}
+    <div><span class="who-k">{{ f.label }}</span>
+      <span class="who-v">{{ card[f.name] }}</span></div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+{% if spent %}
+<div class="card who-card">
+  <span class="who-k">Spent with you</span>
+  <span class="who-total">${{ '%.2f'|format(spent) }}</span>
+</div>
+{% endif %}
+
+{% for g in groups %}
+<div class="card">
+  <h2>{{ g.m.icon }} {{ g.m.label }}
+    <span class="who-n">{{ g.rows|length }}</span></h2>
+  <div class="tbl-wrap">
+    <table class="tbl">
+      <thead><tr>
+        {%- for f in g.m.fields if not f.hidden %}
+        <th {% if f.html == 'number' %}class="num"{% endif %}>{{ f.label }}</th>
+        {%- endfor %}
+      </tr></thead>
+      <tbody>
+        {% for r in g.rows %}
+        <tr>
+          {%- for f in g.m.fields if not f.hidden %}
+          <td {% if f.html == 'number' %}class="num"{% endif %}>
+            {{- r[f.name] if r[f.name] is not none else '' -}}</td>
+          {%- endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endfor %}
+
+{% if not card and not groups %}
+<div class="card"><p class="muted" style="margin:0">
+  Nothing on file for {{ name }} yet.</p></div>
+{% endif %}
+
+{% endblock %}

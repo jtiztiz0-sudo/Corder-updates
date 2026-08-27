@@ -38,7 +38,7 @@ BUSINESS = {'name': 'Sarah is a bicep biter',
            '--green': '#2e7d5b'},
  'theme_key': 'pink',
  'initials': 'SB',
- 'generated': '2026-08-26 22:42'}
+ 'generated': '2026-08-26 22:58'}
 
 MODULES = [{'key': 'scheduling',
   'label': 'Schedule',
