@@ -443,7 +443,13 @@
     });
 
     function iso(y, m, d) {
-      return y + "-" + ("0" + (m + 1)).slice(-2) + "-" + ("0" + d).slice(-2);
+      // The YEAR has to be padded to four too. A date box always stores four
+      // digits ("0206-09-25"), so an unpadded year built "206-09-25" here and
+      // the two never matched -- the booking existed, sat in the list, and
+      // was simply invisible on the calendar. Only bites years under 1000,
+      // which is exactly what a typo for 2026 produces.
+      return ("000" + y).slice(-4) + "-" +
+             ("0" + (m + 1)).slice(-2) + "-" + ("0" + d).slice(-2);
     }
     function pretty(day) {
       var p = day.split("-");
