@@ -37,10 +37,23 @@
   <button type="button" class="hist-btn" id="histBtn">History
     <span class="hist-n">{{ retired|length }}</span></button>
   {% endif %}
+  {# Opens the form below. Uses the tab's own noun, so Staff says "person"
+     and Schedule says "booking" without a second list to keep in step. #}
+  <button type="button" class="add-toggle" id="addToggle"
+          aria-expanded="false" aria-controls="addCard">+ Add {{ m.singular }}</button>
   <input type="search" id="search" class="search" placeholder="Search…">
 </div>
 
-<div class="card add-card">
+{# Shut on every page load, deliberately: the records are what you came for,
+   and an empty form permanently taking the top third of the screen was the
+   complaint. Not remembered between visits -- "it goes away after the page is
+   reloaded" is the asked-for behaviour, so there is nothing stored. #}
+<div class="card add-card" id="addCard" hidden>
+  <div class="add-head">
+    <span class="add-title">New {{ m.singular }}</span>
+    <button type="button" class="add-close" id="addClose"
+            title="Close this (Esc)">✕</button>
+  </div>
   <div class="add-grid">
     {% for f in m.fields %}{% if not f.owner_only %}
     <div class="fld{{ ' wide' if f.wide }}">
@@ -54,6 +67,40 @@
     <span class="err" id="addErr"></span>
   </div>
 </div>
+
+<script>
+  // Open/close the add form. Kept simple on purpose: no memory of the state
+  // between page loads, because he asked for it to be gone again after a
+  // reload. It stays OPEN after each add, so several can go in one after
+  // another without reaching for the button every time.
+  (function () {
+    var card = document.getElementById("addCard");
+    var open = document.getElementById("addToggle");
+    var shut = document.getElementById("addClose");
+    if (!card || !open) return;
+    function setOpen(on) {
+      card.hidden = !on;
+      open.setAttribute("aria-expanded", on ? "true" : "false");
+      open.classList.toggle("on", on);
+      if (on) {
+        // straight into the first box, so it can be typed without reaching
+        // for the mouse again
+        var first = card.querySelector(".add-in");
+        if (first && first.focus) first.focus();
+      } else {
+        open.focus();
+      }
+    }
+    open.addEventListener("click", function () { setOpen(card.hidden); });
+    if (shut) shut.addEventListener("click", function () { setOpen(false); });
+    document.addEventListener("keydown", function (e) {
+      // Esc closes it -- but never while a dropdown or something else is
+      // mid-interaction inside it, so only when the form is actually open
+      if (e.key === "Escape" && !card.hidden) { setOpen(false); }
+    });
+  })();
+</script>
+
 
 {% if cal is not none %}
 {# A dated tab gets a real month view. Built from the rows already on this

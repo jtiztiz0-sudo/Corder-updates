@@ -152,6 +152,23 @@ button:hover{filter:brightness(1.08)}
 /* the records are the point of the page; the add form is a tool. Same card,
    but set back a shade so the eye lands on the list first. */
 .add-card{background:var(--surface-2)}
+/* The button that opens it. Sits beside the title and reads as an action, not
+   a tab -- the accent colour is the whole cue. */
+.add-toggle{margin-left:auto;background:var(--blue);color:#fff;border:0;
+  border-radius:8px;padding:8px 14px;font-size:13.5px;font-weight:700;
+  cursor:pointer;white-space:nowrap;flex:0 0 auto}
+.add-toggle:hover{filter:brightness(1.08)}
+.add-toggle.on{background:var(--surface);color:var(--muted);
+  box-shadow:inset 0 0 0 1px var(--line)}
+/* the search box was carrying the auto margin; only one thing in a flex row
+   may, or the free space is split and both drift inward */
+.page-head .search{margin-left:10px}
+.add-head{display:flex;align-items:center;margin-bottom:10px}
+.add-title{font-size:11px;text-transform:uppercase;letter-spacing:.07em;
+  color:var(--muted);font-weight:700}
+.add-close{margin-left:auto;background:none;border:0;color:var(--muted);
+  font-size:15px;line-height:1;padding:2px 4px;cursor:pointer;font-weight:400}
+.add-close:hover{color:var(--red);background:none}
 .add-card .fld label{font-size:11px;text-transform:uppercase;
   letter-spacing:.06em;color:var(--muted);font-weight:700}
 .req{color:var(--red)}
