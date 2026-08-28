@@ -1,6 +1,6 @@
 {
-  "version": 73,
-  "published": "2026-08-26 23:06",
+  "version": 74,
+  "published": "2026-08-28 13:44",
   "files": {
     "app.py": {
       "sha256": "5bd3dd84489dd4dca770d7ff73161639300a62c181a74a0ccf8802355340f2a0",
@@ -47,8 +47,8 @@
       "size": 5862
     },
     "templates/records.html": {
-      "sha256": "89dc9992ccaa1b78ac364e210c5deff82110c6e4d018c7d886e727ee59e7ec97",
-      "size": 28221
+      "sha256": "131b5ed97b35d18c336b8721026cb316dfbb4ec9b50bbfd5fb939d2981742f90",
+      "size": 28631
     },
     "templates/who.html": {
       "sha256": "b32df783e2a118c581a5e9a51fc88ea97efab05dcb5410fa5e22cd9fae2a18a4",
@@ -84,7 +84,7 @@
       "version": 9,
       "files": {
         "modules.py": {
-          "sha256": "59562ab0c16d8bf3cac5dd2296525c46680f3daede4e02978efcde714811a179",
+          "sha256": "faf27c342b9f67172369848400b82f0a2a0876e0075bdc6a959ee6653f2aa7ee",
           "size": 12044
         }
       }
@@ -93,7 +93,7 @@
       "version": 2,
       "files": {
         "modules.py": {
-          "sha256": "29401b274e5ce5419ab42b15388b7c7b1376346648b73ee470efcfffefc62e6c",
+          "sha256": "17435bba5cf9b83aadfc7d03f2d0350a91d11953f935090cff4c205ed67b45dc",
           "size": 14633
         },
         "static/logo.png": {

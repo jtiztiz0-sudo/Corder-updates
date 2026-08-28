@@ -242,7 +242,13 @@
 {% block scripts %}
 <script>
   var KEY = "{{ m.key }}";
-  var SUM_FIELD = {{ ('"' ~ m.sum_field ~ '"') if m.sum_field else 'null' }};
+  {#- tojson, NOT string concatenation. Building '"' ~ name ~ '"' produces a
+     plain string, which Jinja then HTML-escapes inside the <script> --
+     "&#34;price&#34;" -- a SyntaxError that killed EVERY handler on the page.
+     Only bit tabs that HAVE a money column, because the other branch emits a
+     bare `null` with no quotes to escape. tojson is marked safe, so it goes
+     in as-is, and it handles None as `null` on its own. -#}
+  var SUM_FIELD = {{ m.sum_field|tojson }};
   var rowsEl = document.getElementById("rows");
   var emptyEl = document.getElementById("empty");
 
