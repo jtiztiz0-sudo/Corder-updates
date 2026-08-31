@@ -1,10 +1,10 @@
 {
-  "version": 75,
-  "published": "2026-08-30 16:19",
+  "version": 76,
+  "published": "2026-08-30 22:57",
   "files": {
     "app.py": {
-      "sha256": "5bd3dd84489dd4dca770d7ff73161639300a62c181a74a0ccf8802355340f2a0",
-      "size": 61277
+      "sha256": "1ed228cd997d33d48034edcce5673cc16664e2c7b4f29db7e2e6c395fbe752dd",
+      "size": 62720
     },
     "db.py": {
       "sha256": "6bd3c9ca520c8ece8a3a26acdc93f4d6c9bfcd500b5ec8f559ddbfaf4a96e0d1",
@@ -39,8 +39,8 @@
       "size": 3261
     },
     "templates/base.html": {
-      "sha256": "ac068061741d395802db6a049aa539799a3c73bad6499ce08fa0824b12228c00",
-      "size": 8948
+      "sha256": "58a0b3934b4d084e625ba339ccdea288a389a7f2de4dd5ee395d58d71b489598",
+      "size": 9125
     },
     "templates/dashboard.html": {
       "sha256": "651b6fb9243cb5dec35409e869255837147195fd80bf0956244d87aa7bffaf0a",
@@ -75,30 +75,26 @@
       "size": 8381
     },
     "static/style.css": {
-      "sha256": "6fac833e6e22d0740036205a510bcdd5374d1d99357cc5a6322998e1bf032d79",
-      "size": 32360
+      "sha256": "cfe7878aa61d209e4c5aa37c43b80a3139dacc330016c2c99fe0111f36d5a7d1",
+      "size": 34727
     }
   },
   "apps": {
     "jake_s_junkyard": {
-      "version": 9,
+      "version": 10,
       "files": {
         "modules.py": {
-          "sha256": "25ab4895bbf891cb351d6b2523aca923c44cd8d520675b144aa8845727c12be0",
-          "size": 12044
+          "sha256": "07eb2d6feff7c47126b187a10ffcda02734cac5404e6c3188e704060a33d22db",
+          "size": 12104
         }
       }
     },
     "new_app": {
-      "version": 3,
+      "version": 1,
       "files": {
         "modules.py": {
-          "sha256": "6da2333739b9e1296ffc2592361a4bacfe4d1b2394e5b2164b0965e55c66a5d9",
-          "size": 14277
-        },
-        "static/logo.png": {
-          "sha256": "23292adf62c29621ef72a297b3a9a3e78d8e3968dbe1f7ac98000fa5bec47cc8",
-          "size": 15242
+          "sha256": "eb9087075928b7261d5bfb014af6778a62c76ce1c6e637995767ae5468c422bd",
+          "size": 13223
         }
       }
     }

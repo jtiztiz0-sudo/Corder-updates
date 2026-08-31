@@ -59,13 +59,21 @@ body{margin:0;background:var(--bg);color:var(--ink);
 /* 68, not 56. Anything sitting under a sticky header has to be measured from
    this -- see .dash-side below and the side-layout fallback -- so changing it
    in one place only would leave a gap or an overlap. */
-header{display:flex;align-items:center;gap:22px;background:var(--surface);
+/* --header-bg / --header-ink let a colour paint the BAR instead of leaving
+   it the same white as a card. Most palettes do not set them and fall back to
+   exactly what they were before, so nothing changes unless a colour asks for
+   it. Wanted because a dark bar across the top is the most recognisable thing
+   about most shop-front designs. */
+header{display:flex;align-items:center;gap:22px;
+  background:var(--header-bg, var(--surface));
+  color:var(--header-ink, var(--ink));
   border-bottom:1px solid var(--line);padding:0 22px;height:68px;
   position:sticky;top:0;z-index:5}
 /* The name is the first thing anyone reads, and a plain bold word sat against
    the edge looked like a placeholder. Heavier and tighter, with the tracking
    pulled in -- that alone is most of the difference. */
-.brand a{font-size:20px;font-weight:750;color:var(--ink);text-decoration:none;
+.brand a{font-size:20px;font-weight:750;
+  color:var(--header-ink, var(--ink));text-decoration:none;
   white-space:nowrap;display:flex;align-items:center;gap:10px;
   letter-spacing:-.015em}
 .brand-name{line-height:1.1}
@@ -81,13 +89,50 @@ header{display:flex;align-items:center;gap:22px;background:var(--surface);
    logo and a square one both come out the same visual size; object-fit keeps
    it from being squashed whatever shape they send. */
 .brand-logo{height:28px;width:auto;max-width:150px;object-fit:contain;display:block}
-nav{display:flex;gap:4px;background:var(--bg);border-radius:10px;padding:4px;
-  overflow-x:auto}
-nav a{color:var(--muted);text-decoration:none;font-weight:600;font-size:13px;
+nav{display:flex;gap:4px;background:var(--header-nav, var(--bg));
+  border-radius:10px;padding:4px;overflow-x:auto}
+nav a{color:var(--header-muted, var(--muted));text-decoration:none;
+  font-weight:600;font-size:13px;
   padding:7px 13px;border-radius:7px;white-space:nowrap;
   transition:background .15s ease,color .15s ease}
 nav a:hover{color:var(--blue);background:var(--surface)}
 nav a.active{color:#fff;background:var(--blue)}
+
+/* ---- LOOKS a palette can ask for ------------------------------------------
+   Only applied when a colour actually asks, so nothing here touches an app
+   that has not. They exist because matching something a business already
+   likes means matching the SHAPE of it -- where the name sits, what the tabs
+   look like, the typeface -- not just the colours. */
+
+/* NAME IN THE MIDDLE, TABS UNDERNEATH -- the shape of most shop fronts. The
+   name is positioned rather than laid out, so it is centred on the window
+   whatever sits to its right, which is how the real thing looks. */
+:root[data-look="centred"] header{
+  flex-wrap:wrap;height:auto;padding:13px 22px 0;justify-content:flex-end;
+  row-gap:0}
+:root[data-look="centred"] header > .brand{
+  position:absolute;left:50%;top:13px;transform:translateX(-50%)}
+:root[data-look="centred"] header > nav{
+  order:9;flex:1 0 100%;justify-content:center;margin:9px 0 0;
+  background:none;padding:0}
+@media(max-width:760px){
+  /* no room to centre anything -- fall back to a plain row */
+  :root[data-look="centred"] header > .brand{position:static;transform:none}
+  :root[data-look="centred"] header > nav{justify-content:flex-start}
+}
+
+/* TABS AS PLAIN WORDS rather than pills: spaced out, small, upper case, with
+   a line under the one you are on. */
+:root[data-nav="plain"] nav{background:none;padding:0;gap:34px}
+:root[data-nav="plain"] nav a{
+  background:none;border-radius:0;padding:9px 0 11px;font-size:12px;
+  font-weight:700;text-transform:uppercase;letter-spacing:.09em}
+:root[data-nav="plain"] nav a:hover{background:none;
+  color:var(--header-ink, var(--ink))}
+:root[data-nav="plain"] nav a.active{
+  background:none;color:var(--header-ink, var(--ink));
+  box-shadow:inset 0 -2px 0 0 currentColor}
+@media(max-width:760px){:root[data-nav="plain"] nav{gap:18px}}
 /* this carries the auto margin that pushes the right-hand cluster over, so
    .theme-btn must not also have one -- two of them split the space */
 .tool-tab{margin-left:auto;display:inline-flex;align-items:center;gap:6px;
@@ -101,7 +146,9 @@ nav a.active{color:#fff;background:var(--blue)}
    12px of height. It happens to centre anyway -- but only by luck, and touch
    the padding on ONE side and the glyph slides off centre, which is exactly
    what the side layout used to do to the reload arrow. */
-.theme-btn{margin-left:10px;background:none;border:1px solid var(--line);
+.theme-btn{margin-left:10px;background:none;
+  border:1px solid var(--header-line, var(--line));
+  color:var(--header-muted, var(--muted));
   border-radius:50%;width:32px;height:32px;padding:0;cursor:pointer;
   font-size:15px;color:var(--muted);line-height:1;display:flex;
   align-items:center;justify-content:center;flex:0 0 auto}

@@ -774,6 +774,35 @@ PALETTES = {'default': {'dark': {'--bg': '#0f1a2e',
                    '--muted': '#8b5f74',
                    '--surface': '#ffffff',
                    '--surface-2': '#ffe1ee'}},
+ 'sage': {'dark': {'--bg': '#171a10',
+                   '--blue': '#a8c96e',
+                   '--green': '#a8c96e',
+                   '--header-bg': '#232a15',
+                   '--header-ink': '#eef1e2',
+                   '--header-line': '#3a4128',
+                   '--header-muted': '#a7ae8c',
+                   '--header-nav': '#171a10',
+                   '--ink': '#eef1e2',
+                   '--line': '#3a4128',
+                   '--muted': '#a7ae8c',
+                   '--shadow': 'none',
+                   '--surface': '#202516',
+                   '--surface-2': '#2b311e'},
+          'label': 'Cream & green',
+          'swatch': '#3c4619',
+          'vars': {'--bg': '#fbf8ef',
+                   '--blue': '#3c4619',
+                   '--green': '#3c4619',
+                   '--header-bg': '#3c4619',
+                   '--header-ink': '#f6f5ea',
+                   '--header-line': '#5a6630',
+                   '--header-muted': '#c9d0ae',
+                   '--header-nav': '#333d15',
+                   '--ink': '#262b16',
+                   '--line': '#dcdac6',
+                   '--muted': '#69704f',
+                   '--surface': '#ffffff',
+                   '--surface-2': '#eff0e2'}},
  'warm': {'dark': {'--bg': '#1f1710',
                    '--blue': '#e0913f',
                    '--ink': '#f5e9db',
@@ -826,7 +855,8 @@ def _look() -> dict:
     # used to live in localStorage under one key while the page that reads it
     # looked for another, so it was forgotten on every reload -- and a webview
     # on a fresh profile would lose it anyway.
-    mode = "auto"
+    # what the COLOUR says it should open as, until they choose otherwise
+    mode = biz.get("mode") or "auto"
     logo = bool(biz.get("logo"))
     try:
         stamp = str(biz.get("generated") or "")
@@ -857,7 +887,10 @@ def _look() -> dict:
             logo = True
     except Exception:
         pass
-    return {"key": key, "vars": PALETTES.get(key, {}).get("vars", {}),
+    style = biz.get("style") or {}
+    return {"key": key, "style": style,
+            "vars": dict(PALETTES.get(key, {}).get("vars", {}),
+                         **(style.get("vars") or {})),
             "dark": PALETTES.get(key, {}).get("dark", {}),
             "density": density, "layout": layout, "mode": mode,
             "logo": logo, "note": note}

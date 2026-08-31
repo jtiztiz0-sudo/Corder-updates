@@ -1,5 +1,7 @@
 <!doctype html>
 <html lang="en" data-density="{{ LOOK.density }}" data-layout="{{ LOOK.layout }}"
+      {% if LOOK.style and LOOK.style.look %}data-look="{{ LOOK.style.look }}"{% endif %}
+      {% if LOOK.style and LOOK.style.nav %}data-nav="{{ LOOK.style.nav }}"{% endif %}
       {% if LOOK.mode != 'auto' %}data-theme="{{ LOOK.mode }}"{% endif %}
       data-page="{{ request.endpoint or '' }}">
 <head>
