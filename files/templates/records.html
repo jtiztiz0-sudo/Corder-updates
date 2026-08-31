@@ -1,7 +1,10 @@
 {% extends "base.html" %}
 {% block title %}{{ m.label }} — {{ BUSINESS.name }}{% endblock %}
 
-{% macro field_input(f, value, cls, is_add) -%}
+{#- `sug` is the id of this box's suggestion list, or nothing. Passed in
+    rather than read out of the page's variables so a call site cannot quietly
+    lose it. -#}
+{% macro field_input(f, value, cls, is_add, sug='') -%}
   {%- if f.html == 'textarea' -%}
     <textarea class="{{ cls }}" data-field="{{ f.name }}" rows="1"
               placeholder="{{ f.label if is_add else '—' }}">{{ value if value is not none else '' }}</textarea>
@@ -22,10 +25,16 @@
         sent after the add succeeds rather than with it -#}
     <input type="file" accept="image/*" class="{{ cls }}" data-field="{{ f.name }}" data-photo>
   {%- else -%}
+    {#- A NEW record starts on today's date. Almost every record is typed on
+        the day it happened, and an empty box is a thing to fill in for no
+        reason. Only on the add form -- filling in a date on a row that is
+        already saved would be rewriting what happened. -#}
+    {%- set start = today if (is_add and f.html == 'date' and not value) else value -%}
     <input type="{{ f.html }}" class="{{ cls }}" data-field="{{ f.name }}"
            {% if f.step %}step="{{ f.step }}"{% endif %}
+           {% if sug %}list="{{ sug }}" autocomplete="off"{% endif %}
            placeholder="{{ f.label if is_add else '—' }}"
-           value="{{ value if value is not none else '' }}">
+           value="{{ start if start is not none else '' }}">
   {%- endif -%}
 {%- endmacro %}
 
@@ -58,7 +67,7 @@
     {% for f in m.fields %}{% if not f.owner_only %}
     <div class="fld{{ ' wide' if f.wide }}">
       <label>{{ f.label }}{% if f.required %} <span class="req">*</span>{% endif %}</label>
-      {{ field_input(f, None, 'add-in', true) }}
+      {{ field_input(f, None, 'add-in', true, 'sug-' + f.name if suggest.get(f.name) else '') }}
     </div>
     {% endif %}{% endfor %}
   </div>
@@ -175,11 +184,13 @@
           {% else %}
           <td {% if f.html == 'number' %}class="num"{% endif %}>
             {%- if f.is_who and r[f.name] -%}
-            <span class="who-cell">{{ field_input(f, r[f.name], 'cell', false) }}<a
+            <span class="who-cell">{{ field_input(f, r[f.name], 'cell', false,
+              'sug-' + f.name if suggest.get(f.name) else '') }}<a
               class="who-go" title="Open {{ r[f.name] }}"
               href="{{ url_for('who', name=r[f.name]) }}">↗</a></span>
             {%- else -%}
-            {{ field_input(f, r[f.name], 'cell', false) }}
+            {{ field_input(f, r[f.name], 'cell', false,
+              'sug-' + f.name if suggest.get(f.name) else '') }}
             {%- endif -%}
           </td>
           {% endif %}
@@ -236,6 +247,15 @@
   </div>
 </div>
 {% endif %}
+
+{#- The lists themselves. One per box, written once at the bottom of the page
+    and pointed at by every input for that box -- the add form and every row.
+    A <datalist> draws nothing until you start typing. -#}
+{% for name, values in suggest.items() %}
+<datalist id="sug-{{ name }}">
+  {% for v in values %}<option value="{{ v }}"></option>{% endfor %}
+</datalist>
+{% endfor %}
 
 {% endblock %}
 

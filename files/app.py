@@ -87,6 +87,93 @@ def problem_report():
 # case-folded below) but "S. Miller" is not. That is the honest limit of it.
 CUSTOMER_FIELDS = ("customer", "client")
 
+# Which tab holds the list a box is really naming. WHO on an Hours entry means
+# somebody on Staff; CUSTOMER on a job means somebody on Customers. Matched on
+# the field's own name AND on its caption, because a business may well have
+# renamed the caption to "Truck #" or "Mover" -- the point is what it MEANS,
+# not what the column is called.
+LOOKUP_WORDS = {
+    "staff": ("who", "employee", "worker", "mover", "driver", "tech",
+              "technician", "assigned", "assigned_to", "staff", "crew",
+              "operator", "stylist", "server", "installer", "fitter",
+              "engineer", "person"),
+    "customers": ("customer", "client", "account", "customer_name"),
+    "products": ("product", "item", "part", "sku"),
+    "leads": ("lead", "enquiry", "prospect"),
+}
+MAX_SUGGESTIONS = 60
+
+
+def _name_field(m):
+    """The box on a tab that holds what a thing is CALLED -- what a suggestion
+    list is made of. Its first visible worded field, which for every tab in
+    the catalogue is the name."""
+    for f in m["fields"]:
+        if f.get("hidden") or f["html"] not in ("text", "textarea"):
+            continue
+        return f["name"]
+    return None
+
+
+def _lookup_tab(f):
+    """The tab whose list this box is naming, if there is one."""
+    words = {(f["name"] or "").lower().strip(),
+             (f["label"] or "").lower().strip().replace(" ", "_")}
+    for key, names in LOOKUP_WORDS.items():
+        if words & set(names):
+            m = modules.by_key(key)
+            if m:
+                return m
+    return None
+
+
+def _column_values(table, column, limit=MAX_SUGGESTIONS):
+    """What has already been typed into one box, newest first.
+
+    Wrapped: a suggestion list is a convenience, and a convenience must never
+    be able to stop a page loading."""
+    try:
+        # GROUP BY, not DISTINCT: after a DISTINCT there is no id left to
+        # order by, and SQLite refuses the whole statement.
+        rows = db.query(
+            "SELECT %s AS v FROM %s WHERE %s IS NOT NULL AND TRIM(%s) != '' "
+            "GROUP BY %s ORDER BY MAX(id) DESC LIMIT ?"
+            % (column, table, column, column, column), (limit,))
+        return [r["v"] for r in rows]
+    except Exception:
+        return []
+
+
+def _suggestions(m):
+    """{field name: what to offer} for every box worth guessing at.
+
+    Text boxes only. Guessing at a note, a price or a date would be noise --
+    and a date has its own answer below."""
+    out = {}
+    for f in m["fields"]:
+        if f.get("hidden") or f["html"] != "text":
+            continue
+        seen, vals = set(), []
+
+        def take(values):
+            for v in values:
+                # same name in different capitals is the same name -- and the
+                # first spelling in wins, which is why the real record goes
+                # in before whatever was typed in a hurry
+                k = (v or "").strip().lower()
+                if k and k not in seen:
+                    seen.add(k); vals.append(v)
+
+        other = _lookup_tab(f)
+        if other is not None and other["key"] != m["key"]:
+            col = _name_field(other)
+            if col:
+                take(_column_values(other["table"], col))
+        take(_column_values(m["table"], f["name"]))
+        if vals:
+            out[f["name"]] = vals[:MAX_SUGGESTIONS]
+    return out
+
 
 def _customer_links():
     """(module, field) for every live tab that names a customer."""
@@ -1596,6 +1683,9 @@ def records(key: str):
     _mark_who(m)                 # so the page can offer a way into a profile
     return render_template("records.html", m=m, rows=rows, retired=retired,
                            total=total, cal=_cal_rows(m, rows),
+                           suggest=_suggestions(m),
+                           # a new record starts on today
+                           today=date.today().isoformat(),
                            cal_first=m["key"] in CAL_FIRST)
 
 

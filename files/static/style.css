@@ -185,12 +185,57 @@ nav a.active{color:#fff;background:var(--blue)}
   /* a plain colour, NOT color-mix() -- that depends on how new the webview
      is, and a hero that silently loses its light on an older machine is
      worse than one that never had any. The theme sets --hero-glow. */
-  background-image:radial-gradient(120% 140% at 78% 8%,
-      var(--hero-glow, rgba(255,255,255,.10)) 0%, transparent 58%),
-    radial-gradient(90% 120% at 8% 100%,
-      var(--hero-glow-2, rgba(255,255,255,.05)) 0%, transparent 60%);
+  /* One SMALL bright source, one cool counter-light on the far side, and a
+     vignette holding the edges down -- the way a lit photograph actually
+     falls. Two wide washes just overlapped into brown. */
+  background-image:
+    radial-gradient(46% 62% at 82% 22%,
+      var(--hero-glow, rgba(255,255,255,.16)) 0%, transparent 70%),
+    radial-gradient(38% 55% at 12% 92%,
+      var(--hero-glow-2, rgba(255,255,255,.06)) 0%, transparent 72%),
+    radial-gradient(120% 100% at 50% 50%,
+      transparent 38%, rgba(0,0,0,.55) 100%);
   position:relative;overflow:hidden}
-.hero-in{max-width:1280px;margin:0 auto;width:100%;position:relative;z-index:1}
+/* TWO COLUMNS ON THE FOLD: the words on the left, their own numbers on the
+   right. The picture this look is copied from fills that half with a
+   photograph; a screen of black with a name floating in it is what "bland"
+   actually means. */
+.hero-wrap{max-width:1280px;margin:0 auto;width:100%;position:relative;
+  z-index:1;display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);
+  gap:52px;align-items:center}
+.hero-in{min-width:0}
+.hero-side{min-width:0;animation:heroIn .5s cubic-bezier(.22,.68,.36,1) .18s both}
+.hero-side .stat-grid{grid-template-columns:repeat(2,minmax(0,1fr));
+  margin-bottom:0;gap:16px}
+/* Glass rather than solid: the tiles have to sit ON the lit background, not
+   punch four pale holes in it. */
+.hero-side .stat-card{background:var(--hero-tile, rgba(255,255,255,.05));
+  border-color:var(--hero-tile-line, rgba(255,255,255,.10));
+  color:var(--hero-ink, var(--ink));box-shadow:none;padding:20px 18px}
+.hero-side .stat-card:hover{background:var(--hero-tile-hi, rgba(255,255,255,.08));
+  border-color:var(--blue);box-shadow:0 12px 28px rgba(0,0,0,.32)}
+.hero-side .stat-num{font-size:34px}
+.hero-side .stat-sub{opacity:.62;color:inherit}
+@media(max-width:980px){
+  .hero-wrap{grid-template-columns:1fr;gap:34px}
+  .hero-side .stat-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+}
+/* It settles in rather than appearing. Each line a beat behind the one above,
+   which is what reads as "smooth" -- and it is 400ms, not a performance. */
+.hero-in > *{animation:heroIn .42s cubic-bezier(.22,.68,.36,1) both}
+.hero-in > *:nth-child(2){animation-delay:.05s}
+.hero-in > *:nth-child(3){animation-delay:.10s}
+.hero-in > *:nth-child(4){animation-delay:.15s}
+.hero-in > *:nth-child(5){animation-delay:.20s}
+.hero-in > *:nth-child(6){animation-delay:.25s}
+.hero-in > *:nth-child(7){animation-delay:.30s}
+@keyframes heroIn{from{opacity:0;transform:translateY(14px)}
+  to{opacity:1;transform:none}}
+/* Somebody who has asked their machine to stop things moving means it. */
+@media(prefers-reduced-motion:reduce){
+  .hero-in > *{animation:none}
+  *{transition:none !important}
+}
 /* the eyebrow: small, wide-set capitals, the way a product page names
    its category above the title */
 .hero-eyebrow{margin:0 0 16px;font-size:12px;font-weight:700;
@@ -206,7 +251,12 @@ nav a.active{color:#fff;background:var(--blue)}
    except this one really adds a record. */
 .hero-catch{display:flex;align-items:stretch;margin-top:26px;
   max-width:520px;background:#fff;border-radius:999px;overflow:hidden;
-  border:1px solid rgba(0,0,0,.08)}
+  border:1px solid rgba(0,0,0,.08);
+  transition:box-shadow .18s ease, border-color .18s ease}
+/* The box inside has no outline of its own, so the whole lozenge shows the
+   focus instead -- a keyboard user must still be able to see where they are. */
+.hero-catch:focus-within{border-color:var(--blue);
+  box-shadow:0 0 0 3px var(--hero-glow-2, rgba(255,255,255,.25))}
 .hero-catch-icon{display:flex;align-items:center;padding:0 4px 0 18px;
   color:#7a7a7a;font-size:15px}
 .hero-catch input{border:0;background:none;padding:15px 12px;
@@ -243,6 +293,10 @@ nav a.active{color:#fff;background:var(--blue)}
    ends up looking like every other app. */
 :root[data-loud="on"] .stat-num{color:var(--blue)}
 :root[data-loud="on"] .stat-card:hover{border-color:var(--blue)}
+.hero-go,.hero-catch button,.corner-go{transition:background .16s ease,
+  color .16s ease, border-color .16s ease, filter .16s ease,
+  transform .16s ease}
+.corner-go:hover{transform:translateY(-2px)}
 
 /* NAME LEFT, TABS CENTRED, buttons right -- the shape most product sites
    use. The tabs are positioned rather than laid out, so they sit in the
@@ -311,10 +365,16 @@ h2{font-size:16px;margin:0 0 12px}
 /* dashboard */
 .stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
   gap:14px;margin-bottom:18px}
-.stat-card{background:var(--surface);border:1px solid var(--line);border-radius:12px;
+.stat-card{background:var(--surface);border:1px solid var(--line);
+  border-radius:var(--radius, 12px);
   padding:16px;text-decoration:none;color:var(--ink);display:block;
-  box-shadow:var(--shadow);transition:border-color .15s ease,transform .1s ease}
-.stat-card:hover{border-color:var(--blue);transform:translateY(-1px)}
+  box-shadow:var(--shadow);
+  /* A tile that changes the instant you touch it feels like a glitch; one
+     that LIFTS feels like a thing you can press. */
+  transition:border-color .18s ease, transform .18s ease, box-shadow .18s ease}
+.stat-card:hover{border-color:var(--blue);transform:translateY(-3px);
+  box-shadow:0 10px 24px rgba(0,0,0,.16)}
+.stat-card:active{transform:translateY(-1px)}
 .stat-icon{font-size:19px}
 .stat-num{font-size:29px;font-weight:700;line-height:1.15;font-variant-numeric:tabular-nums}
 .stat-label{font-weight:600}
@@ -506,7 +566,8 @@ input[type=file]{width:auto;padding:4px 0;border:0;background:none;font-size:12p
 select.st-good{color:var(--green);font-weight:600}
 select.st-warn{color:var(--amber);font-weight:600}
 select.st-bad{color:var(--red);font-weight:600}
-a{color:var(--blue)}
+a{color:var(--blue);transition:color .15s ease, opacity .15s ease,
+  background .15s ease, border-color .15s ease}
 
 @media(max-width:760px){
   header{gap:12px;padding:0 12px}

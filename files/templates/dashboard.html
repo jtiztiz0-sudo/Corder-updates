@@ -1,19 +1,39 @@
 {% extends "base.html" %}
 {% block content %}
 
+{# Written once and used in two places -- inside the hero on the looks that
+   have one, on its own otherwise. Two copies of this markup would drift. #}
+{% macro stat_tiles() %}
+<div class="stat-grid">
+  {% for c in cards %}
+  <a class="stat-card" href="{{ url_for('records', key=c['m'].key) }}">
+    <div class="stat-icon">{{ c['m'].icon }}</div>
+    <div class="stat-num">{{ c['count'] }}</div>
+    <div class="stat-label">{{ c['m'].label }}</div>
+    {% if c['total'] is not none %}
+      <div class="stat-sub">${{ '%.2f'|format(c['total']) }}</div>
+    {% elif c['m'].date_field %}
+      <div class="stat-sub">{{ c['today'] }} today</div>
+    {% endif %}
+  </a>
+  {% endfor %}
+</div>
+{% endmacro %}
+
 {% if LOOK.style and LOOK.style.hero %}
 {# The front page as a shop front rather than a form: the name big enough to
    read across a room, and the one number actually worth seeing. Everything in
    it is real -- the badge is today's date, the line under it counts what is
    on. A hero full of made-up marketing would be worse than none. #}
 <div class="hero">
+  <div class="hero-wrap">
   <div class="hero-in">
     {# the eyebrow: their own tabs, in the small capitals a product page puts
        its category in #}
     <p class="hero-eyebrow">
       {{- MODULES | rejectattr('key', 'equalto', 'wishlist')
                   | map(attribute='label') | join(' &middot; ') | safe -}}</p>
-    <span class="hero-badge">{{ today }}</span>
+    <span class="hero-badge">{{ today|shortdate }}</span>
     <h1 class="hero-name">{{ BUSINESS.name }}</h1>
     {% if BUSINESS.tagline %}<p class="hero-sub">{{ BUSINESS.tagline }}</p>{% endif %}
     <div class="hero-act">
@@ -42,6 +62,13 @@
       Goes straight onto {{ cards[0]['m'].label }}. Nothing leaves this computer.</p>
     {% endif %}
   </div>
+  {% if cards %}
+  {#- The other half of the fold. Their own numbers, not decoration: the
+     picture fills this half with a photograph of the product, and the nearest
+     honest equivalent here is what is actually in the app. -#}
+  <div class="hero-side">{{ stat_tiles() }}</div>
+  {% endif %}
+  </div>
 </div>
 {% if cards %}
 {#- Floats in the corner, the way a shop front keeps a help button there.
@@ -55,20 +82,7 @@
 {% if BUSINESS.tagline %}<p class="muted sub">{{ BUSINESS.tagline }}</p>{% endif %}
 {% endif %}
 
-<div class="stat-grid">
-  {% for c in cards %}
-  <a class="stat-card" href="{{ url_for('records', key=c['m'].key) }}">
-    <div class="stat-icon">{{ c['m'].icon }}</div>
-    <div class="stat-num">{{ c['count'] }}</div>
-    <div class="stat-label">{{ c['m'].label }}</div>
-    {% if c['total'] is not none %}
-      <div class="stat-sub">${{ '%.2f'|format(c['total']) }}</div>
-    {% elif c['m'].date_field %}
-      <div class="stat-sub">{{ c['today'] }} today</div>
-    {% endif %}
-  </a>
-  {% endfor %}
-</div>
+{% if not (LOOK.style and LOOK.style.hero) %}{{ stat_tiles() }}{% endif %}
 
 {% if wishes %}
 <div class="card">
@@ -85,7 +99,7 @@
           {% else %}<span class="wl-pill pending">Pending</span>{% endif %}
         </td>
         <td class="wl-text">{{ w['request'] }}</td>
-        <td class="w-open muted tiny">{{ (w['created_at'] or '')[:10] }}</td>
+        <td class="w-open muted tiny">{{ w['created_at']|shortdate }}</td>
       </tr>
       {% endfor %}
     </tbody>
@@ -98,7 +112,7 @@
 <div class="dash-cols">
   <div>
     <div class="card">
-      <h2>Today — {{ today }}</h2>
+      <h2>Today — {{ today|shortdate }}</h2>
       {% if today_rows %}
       <table class="tbl">
         <tbody>
@@ -106,7 +120,9 @@
           <tr>
             <td class="w-tag"><span class="tag">{{ t['m'].icon }} {{ t['m'].label }}</span></td>
             {% for f in t['m'].fields[:3] %}
-              <td>{{ t['r'][f.name] if t['r'][f.name] is not none else '' }}</td>
+              {#- a date reads "4 Aug" here, like every other date on the page -#}
+              <td>{{ (t['r'][f.name]|shortdate if f.type == 'date'
+                      else t['r'][f.name]) if t['r'][f.name] is not none else '' }}</td>
             {% endfor %}
             <td class="w-open"><a href="{{ url_for('records', key=t['m'].key) }}">open</a></td>
           </tr>
@@ -124,7 +140,9 @@
             <td class="w-when">{{ t['when']|shortdate }}</td>
             <td class="w-tag"><span class="tag">{{ t['m'].icon }} {{ t['m'].label }}</span></td>
             {% for f in t['m'].fields[:2] %}
-              <td>{{ t['r'][f.name] if t['r'][f.name] is not none else '' }}</td>
+              {#- a date reads "4 Aug" here, like every other date on the page -#}
+              <td>{{ (t['r'][f.name]|shortdate if f.type == 'date'
+                      else t['r'][f.name]) if t['r'][f.name] is not none else '' }}</td>
             {% endfor %}
             <td class="w-open"><a href="{{ url_for('records', key=t['m'].key) }}">open</a></td>
           </tr>
@@ -147,7 +165,9 @@
             <td class="w-when">{{ t['when']|shortdate }}</td>
             <td class="w-tag"><span class="tag">{{ t['m'].icon }} {{ t['m'].label }}</span></td>
             {% for f in t['m'].fields[:2] %}
-              <td>{{ t['r'][f.name] if t['r'][f.name] is not none else '' }}</td>
+              {#- a date reads "4 Aug" here, like every other date on the page -#}
+              <td>{{ (t['r'][f.name]|shortdate if f.type == 'date'
+                      else t['r'][f.name]) if t['r'][f.name] is not none else '' }}</td>
             {% endfor %}
             <td class="w-open"><a href="{{ url_for('records', key=t['m'].key) }}">open</a></td>
           </tr>
