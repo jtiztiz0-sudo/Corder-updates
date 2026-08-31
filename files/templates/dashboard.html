@@ -1,8 +1,59 @@
 {% extends "base.html" %}
 {% block content %}
 
+{% if LOOK.style and LOOK.style.hero %}
+{# The front page as a shop front rather than a form: the name big enough to
+   read across a room, and the one number actually worth seeing. Everything in
+   it is real -- the badge is today's date, the line under it counts what is
+   on. A hero full of made-up marketing would be worse than none. #}
+<div class="hero">
+  <div class="hero-in">
+    {# the eyebrow: their own tabs, in the small capitals a product page puts
+       its category in #}
+    <p class="hero-eyebrow">
+      {{- MODULES | rejectattr('key', 'equalto', 'wishlist')
+                  | map(attribute='label') | join(' &middot; ') | safe -}}</p>
+    <span class="hero-badge">{{ today }}</span>
+    <h1 class="hero-name">{{ BUSINESS.name }}</h1>
+    {% if BUSINESS.tagline %}<p class="hero-sub">{{ BUSINESS.tagline }}</p>{% endif %}
+    <div class="hero-act">
+      <p class="hero-line">
+        <span class="hero-clock" aria-hidden="true">&#9201;</span>
+        {%- if today_rows %} {{ today_rows|length }} on today
+        {%- else %} Nothing on today{% endif -%}
+      </p>
+      {% if cards %}
+      <a class="hero-go" href="{{ url_for('records', key=cards[0]['m'].key) }}">
+        Open {{ cards[0]['m'].label }}</a>
+      {% endif %}
+    </div>
+    {% if cards and cards[0]['first'] %}
+    {# The capture pill. Theirs takes an email and promises a code; this one
+       really adds a record to the tab you use most -- a box that looked the
+       part and did nothing would be worse than no box. #}
+    <form class="hero-catch" id="heroCatch"
+          data-key="{{ cards[0]['m'].key }}" data-field="{{ cards[0]['first'] }}">
+      <span class="hero-catch-icon" aria-hidden="true">&#9998;</span>
+      <input type="text" id="heroCatchIn" autocomplete="off"
+             placeholder="New {{ cards[0]['m'].singular }} &mdash; type it and press add">
+      <button type="submit">Add it</button>
+    </form>
+    <p class="hero-fine" id="heroCatchSaid">
+      Goes straight onto {{ cards[0]['m'].label }}. Nothing leaves this computer.</p>
+    {% endif %}
+  </div>
+</div>
+{% if cards %}
+{#- Floats in the corner, the way a shop front keeps a help button there.
+   Goes to the tab they use most, so it is a shortcut rather than an
+   ornament. -#}
+<a class="corner-go" href="{{ url_for('records', key=cards[0]['m'].key) }}"
+   title="Open {{ cards[0]['m'].label }}">{{ cards[0]['m'].icon }}</a>
+{% endif %}
+{% else %}
 <h1>{{ BUSINESS.name }}</h1>
 {% if BUSINESS.tagline %}<p class="muted sub">{{ BUSINESS.tagline }}</p>{% endif %}
+{% endif %}
 
 <div class="stat-grid">
   {% for c in cards %}
@@ -158,4 +209,33 @@
 </script>
 {% endif %}
 
+<script>
+  // The capture pill really adds a record. It posts to the same place the tab
+  // itself does, so there is one way in and no second copy of the rules.
+  (function () {
+    var f = document.getElementById("heroCatch");
+    if (!f) return;
+    var box = document.getElementById("heroCatchIn");
+    var said = document.getElementById("heroCatchSaid");
+    var was = said ? said.textContent : "";
+    f.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var v = (box.value || "").trim();
+      if (!v) { box.focus(); return; }
+      var body = {};
+      body[f.dataset.field] = v;
+      fetch("/m/" + f.dataset.key + "/add", {
+        method: "POST", headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(body)
+      }).then(function (r) { return r.json(); })
+        .then(function (d) {
+          if (!d.ok) { said.textContent = d.error || "That did not save."; return; }
+          box.value = "";
+          said.textContent = "Added. " + was;
+          setTimeout(function () { location.reload(); }, 550);
+        })
+        .catch(function () { said.textContent = "That did not save."; });
+    });
+  })();
+</script>
 {% endblock %}

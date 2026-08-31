@@ -2,6 +2,8 @@
 <html lang="en" data-density="{{ LOOK.density }}" data-layout="{{ LOOK.layout }}"
       {% if LOOK.style and LOOK.style.look %}data-look="{{ LOOK.style.look }}"{% endif %}
       {% if LOOK.style and LOOK.style.nav %}data-nav="{{ LOOK.style.nav }}"{% endif %}
+      {% if LOOK.style and LOOK.style.btn %}data-btn="{{ LOOK.style.btn }}"{% endif %}
+      {% if LOOK.style and LOOK.style.loud %}data-loud="{{ LOOK.style.loud }}"{% endif %}
       {% if LOOK.mode != 'auto' %}data-theme="{{ LOOK.mode }}"{% endif %}
       data-page="{{ request.endpoint or '' }}">
 <head>
@@ -51,6 +53,18 @@
   </style>
 </head>
 <body>
+{%- if LOOK.style and LOOK.style.strip %}
+{# A thin line across the very top, the way a shop front runs a notice
+   above its menu. Shows the tagline -- the one sentence about the
+   business worth repeating. #}
+<div class="top-strip">
+  <span class="strip-arrow" aria-hidden="true">&#8249;</span>
+  <span>{{ BUSINESS.tagline or BUSINESS.name }}</span>
+  {#- a real place to go, not decoration: it is how they ask for a change -#}
+  <a class="strip-go" href="{{ url_for('records', key='wishlist') }}">Ask for a change</a>
+  <span class="strip-arrow" aria-hidden="true">&#8250;</span>
+</div>
+{%- endif %}
   <header>
     <div class="brand"><a href="{{ url_for('dashboard') }}">
       {%- if LOOK.logo %}<img class="brand-logo"
@@ -73,7 +87,8 @@
     {% for m in MODULES if m.key == 'wishlist' %}
     <a class="tool-tab {{ 'active' if request.view_args and request.view_args.get('key') == 'wishlist' }}"
        href="{{ url_for('records', key='wishlist') }}"
-       title="Ask for something to be changed">{{ m.icon }} {{ m.label }}</a>
+       title="Ask for something to be changed">{{ m.icon }} {{ m.label }}
+       {%- if OPEN_WISHES %}<span class="tab-badge">{{ OPEN_WISHES }}</span>{% endif %}</a>
     {% endfor %}
     {# Restart. Worth having for them, not just for me: an update is applied
        when the app STARTS, so this is how a fix that was just sent actually

@@ -738,6 +738,35 @@ PALETTES = {'default': {'dark': {'--bg': '#0f1a2e',
                     '--muted': '#537a68',
                     '--surface': '#ffffff',
                     '--surface-2': '#dfeee6'}},
+ 'midnight': {'dark': {'--bg': '#0a0a0a',
+                       '--blue': '#ff3c00',
+                       '--green': '#3ecf8e',
+                       '--header-bg': '#ffffff',
+                       '--header-ink': '#111111',
+                       '--header-line': '#e0e0e0',
+                       '--header-muted': '#555555',
+                       '--header-nav': '#f3f3f3',
+                       '--ink': '#f3f3f3',
+                       '--line': '#2b2b2b',
+                       '--muted': '#9b9b9b',
+                       '--shadow': 'none',
+                       '--surface': '#151515',
+                       '--surface-2': '#1f1f1f'},
+              'label': 'Midnight',
+              'swatch': '#ff3c00',
+              'vars': {'--bg': '#f6f6f6',
+                       '--blue': '#d63400',
+                       '--green': '#1f7a4d',
+                       '--header-bg': '#ffffff',
+                       '--header-ink': '#111111',
+                       '--header-line': '#e0e0e0',
+                       '--header-muted': '#555555',
+                       '--header-nav': '#f3f3f3',
+                       '--ink': '#141414',
+                       '--line': '#e0e0e0',
+                       '--muted': '#5f5f5f',
+                       '--surface': '#ffffff',
+                       '--surface-2': '#ededed'}},
  'mono': {'dark': {'--bg': '#1a1c1f',
                    '--blue': '#aab4c0',
                    '--ink': '#e8eaed',
@@ -894,6 +923,33 @@ def _look() -> dict:
             "dark": PALETTES.get(key, {}).get("dark", {}),
             "density": density, "layout": layout, "mode": mode,
             "logo": logo, "note": note}
+
+
+def _open_wishes() -> int:
+    """How many changes they have asked for and not had yet.
+
+    Shown as a badge, the way a shop front badges a basket. A real number or
+    nothing -- a badge that is always there stops being read.
+    """
+    m = modules.by_key("wishlist")
+    if not m:
+        return 0
+    done = ((m.get("archive") or {}).get("done_value") or "").strip()
+    try:
+        if done:
+            rows = db.query(
+                "SELECT COUNT(*) AS c FROM %s WHERE COALESCE(status,'') != ?"
+                % m["table"], (done,))
+        else:
+            rows = db.query("SELECT COUNT(*) AS c FROM %s" % m["table"])
+        return int(rows[0]["c"]) if rows else 0
+    except Exception:
+        return 0                       # a badge must never break a page
+
+
+@app.context_processor
+def _badge_ctx():
+    return {"OPEN_WISHES": _open_wishes()}
 
 
 @app.context_processor
@@ -1445,7 +1501,11 @@ def dashboard():
             due = len(rows)
             for r in rows:
                 today_rows.append({"m": m, "r": r})
-        cards.append({"m": m, "count": count, "total": total, "today": due})
+        cards.append({"m": m, "count": count, "total": total, "today": due,
+        # the first box you would type into -- what the front-page quick-add
+        # fills. Skips anything hidden, so it can never aim at a box that is
+        # not on the form.
+        "first": next((f["name"] for f in m["fields"] if not f.get("hidden")), "")})
     wishes, just_fixed = _wishlist()
     return render_template("dashboard.html", cards=cards,
                            today_rows=today_rows, today=today,

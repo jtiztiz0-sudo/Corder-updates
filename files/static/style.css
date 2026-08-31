@@ -121,12 +121,151 @@ nav a.active{color:#fff;background:var(--blue)}
   :root[data-look="centred"] header > nav{justify-content:flex-start}
 }
 
+/* BUTTONS AS OUTLINES rather than solid blocks -- white, thin border, dark
+   text, which is how most shop fronts draw a control. The ONE real action on
+   a page keeps its colour: without that a form becomes a wall of identical
+   grey boxes with nothing saying what to press. */
+:root[data-btn="outline"] button{
+  background:var(--surface);color:var(--ink);border:1px solid var(--line);
+  font-weight:600}
+:root[data-btn="outline"] button:hover{
+  filter:none;border-color:var(--blue);color:var(--blue)}
+:root[data-btn="outline"] #addBtn,
+:root[data-btn="outline"] .add-toggle{
+  background:var(--blue);color:#fff;border-color:var(--blue)}
+:root[data-btn="outline"] #addBtn:hover,
+:root[data-btn="outline"] .add-toggle:hover{
+  filter:brightness(1.08);color:#fff}
+
+/* A THIN LINE ACROSS THE VERY TOP, above the bar -- with somewhere to go
+   in it, the way a shop front puts a link in its notice. */
+.top-strip{display:flex;align-items:center;justify-content:center;gap:10px;
+  flex-wrap:wrap}
+.strip-arrow{opacity:.45;font-size:15px;line-height:1}
+.strip-go{color:var(--blue);font-weight:700;text-decoration:underline;
+  text-underline-offset:3px}
+.strip-go:hover{filter:brightness(1.15)}
+
+/* A COUNT ON A TAB, the way a basket wears one. Only drawn when there is
+   something to count -- a badge that is always there stops being read. */
+.tab-badge{display:inline-flex;align-items:center;justify-content:center;
+  min-width:18px;height:18px;padding:0 5px;margin-left:6px;
+  border-radius:999px;background:var(--blue);color:#fff;
+  font-size:11px;font-weight:800;line-height:1;vertical-align:middle}
+
+/* A ROUND BUTTON IN THE CORNER. Fixed, so it stays there as the page moves,
+   and out of the way of anything it might sit on top of. */
+.corner-go{position:fixed;right:22px;bottom:22px;z-index:40;
+  width:52px;height:52px;border-radius:999px;display:flex;
+  align-items:center;justify-content:center;font-size:22px;
+  text-decoration:none;background:var(--blue);color:#fff;
+  box-shadow:0 6px 20px rgba(0,0,0,.35)}
+.corner-go:hover{filter:brightness(1.1)}
+@media(max-width:700px){.corner-go{right:14px;bottom:14px}}
+
+/* A THIN LINE ACROSS THE VERY TOP, above the bar. */
+.top-strip{background:var(--strip-bg, var(--surface-2));
+  color:var(--strip-ink, var(--muted));text-align:center;
+  padding:7px 16px;font-size:12.5px;letter-spacing:.02em}
+
+/* THE FRONT PAGE AS A SHOP FRONT. Full width -- it breaks out of the page's
+   own margins on purpose, because a hero that stops short of the edges is
+   not a hero. */
+/* Fills the screen. A hero that is a 200px band is a heading with a
+   background; the thing it is copied from takes the whole first view,
+   and that difference is most of why the two did not look alike. */
+.hero{margin:-22px calc(50% - 50vw) 30px;width:100vw;
+  min-height:calc(78vh - 68px);display:flex;align-items:center;
+  padding:56px 22px 60px;
+  background:var(--hero-bg, var(--surface-2));
+  color:var(--hero-ink, var(--ink));border-bottom:1px solid var(--line);
+  /* light in it. A flat band reads as an empty box; the picture's hero
+     has a lit horizon behind the type, and this is the honest way to
+     get depth without inventing a photograph. */
+  /* a plain colour, NOT color-mix() -- that depends on how new the webview
+     is, and a hero that silently loses its light on an older machine is
+     worse than one that never had any. The theme sets --hero-glow. */
+  background-image:radial-gradient(120% 140% at 78% 8%,
+      var(--hero-glow, rgba(255,255,255,.10)) 0%, transparent 58%),
+    radial-gradient(90% 120% at 8% 100%,
+      var(--hero-glow-2, rgba(255,255,255,.05)) 0%, transparent 60%);
+  position:relative;overflow:hidden}
+.hero-in{max-width:1280px;margin:0 auto;width:100%;position:relative;z-index:1}
+/* the eyebrow: small, wide-set capitals, the way a product page names
+   its category above the title */
+.hero-eyebrow{margin:0 0 16px;font-size:12px;font-weight:700;
+  letter-spacing:.22em;text-transform:uppercase;opacity:.72}
+/* the clock beside the count, as on the countdown line */
+.hero-clock{margin-right:5px}
+/* the count and the button share a line, as they do in the picture */
+.hero-act{display:flex;align-items:center;gap:18px;flex-wrap:wrap;
+  margin-top:22px}
+.hero-act .hero-line,.hero-act .hero-go{margin-top:0}
+/* THE CAPTURE PILL: one white lozenge holding a box and a dark
+   button, exactly the shape of the email capture it is copied from --
+   except this one really adds a record. */
+.hero-catch{display:flex;align-items:stretch;margin-top:26px;
+  max-width:520px;background:#fff;border-radius:999px;overflow:hidden;
+  border:1px solid rgba(0,0,0,.08)}
+.hero-catch-icon{display:flex;align-items:center;padding:0 4px 0 18px;
+  color:#7a7a7a;font-size:15px}
+.hero-catch input{border:0;background:none;padding:15px 12px;
+  font-size:14.5px;color:#111;border-radius:0;width:auto;flex:1 1 auto}
+.hero-catch input:focus{outline:none}
+.hero-catch input::placeholder{color:#8a8a8a}
+.hero-catch button{border-radius:0;border:0;padding:15px 22px;
+  background:#111;color:#fff;font-weight:700;font-size:14px;
+  white-space:nowrap;flex:0 0 auto}
+.hero-catch button:hover{filter:none;background:var(--blue)}
+/* the small print under it, like the terms line */
+.hero-fine{margin:11px 0 0;font-size:12px;opacity:.6;max-width:520px}
+@media(max-width:700px){
+  .hero{min-height:auto}
+  .hero-catch{flex-wrap:wrap;border-radius:16px}
+  .hero-catch button{width:100%}
+}
+.hero-badge{display:inline-block;background:var(--blue);color:#fff;
+  font-size:11.5px;font-weight:800;letter-spacing:.1em;
+  text-transform:uppercase;padding:5px 11px;border-radius:3px}
+.hero-name{font-size:clamp(42px,7.5vw,92px);line-height:1.02;margin:14px 0 0;
+  font-family:var(--font-head);font-weight:var(--head-weight, 800);
+  letter-spacing:var(--head-space, -.03em);color:inherit}
+.hero-sub{margin:10px 0 0;font-size:17px;opacity:.72}
+.hero-line{margin:18px 0 0;font-size:15px;font-weight:700;color:var(--blue)}
+.hero-go{display:inline-block;margin-top:20px;padding:11px 22px;
+  border:1px solid currentColor;border-radius:var(--radius-btn, 999px);
+  color:inherit;text-decoration:none;font-weight:700;font-size:14px}
+.hero-go:hover{background:var(--blue);border-color:var(--blue);color:#fff}
+@media(max-width:700px){.hero{padding:38px 18px 42px}}
+
+/* THE ACCENT ACTUALLY USED -- on the big numbers, not only on links.
+   Without this a colour is only ever seen on a hover, which is how an app
+   ends up looking like every other app. */
+:root[data-loud="on"] .stat-num{color:var(--blue)}
+:root[data-loud="on"] .stat-card:hover{border-color:var(--blue)}
+
+/* NAME LEFT, TABS CENTRED, buttons right -- the shape most product sites
+   use. The tabs are positioned rather than laid out, so they sit in the
+   middle of the WINDOW rather than the middle of whatever is left over. */
+:root[data-look="split"] header > nav{
+  position:absolute;left:50%;transform:translateX(-50%)}
+@media(max-width:900px){
+  /* not enough room to centre anything without it colliding */
+  :root[data-look="split"] header > nav{position:static;transform:none}
+}
+
+/* PILL BUTTONS, without dragging every box you type in along with them --
+   a table full of pill-shaped cells looks absurd, so buttons get their own. */
+button,.btn{border-radius:var(--radius-btn, var(--radius-sm))}
+
 /* TABS AS PLAIN WORDS rather than pills: spaced out, small, upper case, with
    a line under the one you are on. */
 :root[data-nav="plain"] nav{background:none;padding:0;gap:34px}
 :root[data-nav="plain"] nav a{
-  background:none;border-radius:0;padding:9px 0 11px;font-size:12px;
-  font-weight:700;text-transform:uppercase;letter-spacing:.09em}
+  background:none;border-radius:0;padding:9px 0 11px;
+  font-size:var(--nav-size, 12px);font-weight:700;
+  text-transform:var(--nav-case, uppercase);
+  letter-spacing:var(--nav-track, .09em)}
 :root[data-nav="plain"] nav a:hover{background:none;
   color:var(--header-ink, var(--ink))}
 :root[data-nav="plain"] nav a.active{
@@ -458,7 +597,7 @@ tr.just-found{outline:2px solid var(--accent);outline-offset:-2px}
 body{font-size:calc(15px * var(--scale))}
 /* everything with a size follows the same one number, so the whole screen
    grows together instead of the body text growing inside fixed furniture */
-h1{font-size:calc(26px * var(--scale))}
+h1{font-size:calc(var(--head-size, 26px) * var(--scale))}
 h2{font-size:calc(18px * var(--scale))}
 .card{padding:calc(18px * var(--scale))}
 .stat-num{font-size:calc(29px * var(--scale))}
