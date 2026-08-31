@@ -148,6 +148,7 @@
           {%- for f in m.fields %}
           <th {% if f.html == 'number' %}class="num"{% endif %}>{{ f.label }}</th>
           {%- endfor %}
+          {%- if rates %}<th class="num w-pay">Pay</th>{% endif %}
           {% if m.show_added %}<th class="w-added">Added</th>{% endif %}
           <th class="w-del"></th>
         </tr>
@@ -196,6 +197,16 @@
           {% endif %}
           {% endfor %}
           {# recorded by the app itself, so it's shown but never typed #}
+          {%- if rates %}
+          {#- worked out, never typed: the rate lives on their card and this is
+             hours x that. Blank when nobody has set one -- $0.00 would look
+             like a decision. -#}
+          <td class="num w-pay pay-cell" data-pay>
+            {%- if pay.get(r['id']) is not none -%}
+            ${{ '%.2f'|format(pay[r['id']]) }}
+            {%- else -%}<span class="muted">&mdash;</span>{%- endif -%}
+          </td>
+          {%- endif %}
           {% if m.show_added %}<td class="w-added added-cell">{{ r['created_at']|shortdate }}</td>{% endif %}
           <td class="w-del"><button type="button" class="xbtn" data-del title="Delete">✕</button></td>
         </tr>
@@ -206,7 +217,16 @@
   <p class="empty" id="empty" style="display:{{ 'none' if rows else 'block' }}">
     No {{ m.label|lower }} yet — add one above.</p>
   {% if m.sum_field %}
-  <div class="total-bar">Total <strong id="total">${{ '%.2f'|format(total or 0) }}</strong></div>
+  <div class="total-bar">Total
+    <strong id="total">
+      {%- if m.sum_unit == 'hours' -%}
+      {{ '%g'|format(total or 0) }} hrs
+      {%- else -%}${{ '%.2f'|format(total or 0) }}{%- endif -%}
+    </strong>
+    {%- if pay_total is not none %}
+    <span class="total-pay">&middot; <strong id="totalPay">${{ '%.2f'|format(pay_total) }}</strong></span>
+    {%- endif %}
+  </div>
   {% endif %}
 </div>
 
@@ -269,6 +289,13 @@
      bare `null` with no quotes to escape. tojson is marked safe, so it goes
      in as-is, and it handles None as `null` on its own. -#}
   var SUM_FIELD = {{ m.sum_field|tojson }};
+  // "money" or "hours" -- a total that did not know this printed 9.5 hours
+  // as $9.50
+  var SUM_UNIT = {{ m.sum_unit|tojson }};
+  // {name (lower-case): rate}, off the tab that holds the rates. Empty on
+  // every tab that has no pay in it, which is all of them but one.
+  var RATES = {{ rates|tojson }};
+  var PAY_MATCH = {{ (m.pay_from.match if m.pay_from else None)|tojson }};
   var rowsEl = document.getElementById("rows");
   var emptyEl = document.getElementById("empty");
 
@@ -294,13 +321,35 @@
   function growAll(scope) { (scope || document).querySelectorAll("textarea").forEach(grow); }
   paintAll(); growAll();
 
+  function rateFor(tr) {
+    if (!PAY_MATCH) return null;
+    var who = tr.querySelector('[data-field="' + PAY_MATCH + '"]');
+    var key = ((who && who.value) || "").trim().toLowerCase();
+    // a name we have no rate for is BLANK, not zero -- "nothing set yet" and
+    // "worth nothing" are different things to say about somebody's wages
+    return Object.prototype.hasOwnProperty.call(RATES, key) ? RATES[key] : null;
+  }
+
   function recalcTotal() {
     if (!SUM_FIELD) return;
-    var sum = 0;
-    rowsEl.querySelectorAll('[data-field="' + SUM_FIELD + '"]').forEach(function (el) {
-      sum += Number(el.value) || 0;
+    var sum = 0, paid = 0, anyPay = false;
+    rowsEl.querySelectorAll("tr").forEach(function (tr) {
+      var el = tr.querySelector('[data-field="' + SUM_FIELD + '"]');
+      if (!el) return;
+      var qty = Number(el.value) || 0;
+      sum += qty;
+      var cell = tr.querySelector("[data-pay]");
+      if (!cell) return;
+      var rate = rateFor(tr);
+      if (rate === null) { cell.innerHTML = '<span class="muted">&mdash;</span>'; return; }
+      anyPay = true;
+      paid += qty * rate;
+      cell.textContent = APP.money(qty * rate);
     });
-    document.getElementById("total").textContent = APP.money(sum);
+    document.getElementById("total").textContent =
+      SUM_UNIT === "hours" ? (Math.round(sum * 100) / 100) + " hrs" : APP.money(sum);
+    var tp = document.getElementById("totalPay");
+    if (tp) tp.textContent = APP.money(anyPay ? paid : 0);
   }
 
   // ---- add ----
@@ -388,7 +437,8 @@
     if (!el.dataset.field) return;
     save(el);
     if (el.hasAttribute("data-status")) paintStatus(el);
-    if (SUM_FIELD && el.dataset.field === SUM_FIELD) recalcTotal();
+    if (SUM_FIELD && (el.dataset.field === SUM_FIELD
+                      || el.dataset.field === PAY_MATCH)) recalcTotal();
   });
   rowsEl.addEventListener("blur", function (e) {
     if (e.target.dataset && e.target.dataset.field && e.target.tagName === "TEXTAREA") save(e.target);

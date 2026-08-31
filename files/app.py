@@ -1244,9 +1244,19 @@ def _clean(field: dict, value):
         if value in (None, "", "-"):
             return None
         try:
-            return float(value)
+            n = float(value)
         except (TypeError, ValueError):
             return None
+        # snapped to the nearest step rather than refused. 9.6 hours becomes
+        # 9.5; a price to the penny; a count to a whole one. Rounding here
+        # rather than in the browser means it holds however it arrives.
+        try:
+            step = float(field.get("step") or 0)
+        except (TypeError, ValueError):
+            step = 0
+        if step > 0:
+            n = round(round(n / step) * step, 6)
+        return n
     if field["type"] == "check":
         return 1 if value in (True, 1, "1", "true", "on") else 0
     if field["type"] == "photo":
@@ -1452,6 +1462,56 @@ def _send_wish(row_id: int, values: dict) -> None:
 def _sum(m: dict) -> float:
     row = db.query_one("SELECT SUM(%s) s FROM %s" % (m["sum_field"], m["table"]))
     return (row["s"] or 0.0) if row else 0.0
+
+
+def _rates(m: dict) -> dict:
+    """{name: rate} off the tab that holds the rates.
+
+    Keyed lower-case, because "Sarah Miller" and "sarah miller" are the same
+    person and being paid nothing over a capital letter would be the worst
+    kind of bug -- silent and about money."""
+    spec = m.get("pay_from")
+    if not spec:
+        return {}
+    other = modules.by_key(spec["tab"])
+    if other is None:
+        return {}
+    who = _name_field(other)
+    if not who:
+        return {}
+    try:
+        rows = db.query("SELECT %s AS n, %s AS r FROM %s"
+                        % (who, spec["rate"], other["table"]))
+    except Exception:
+        return {}
+    out = {}
+    for r in rows:
+        name = (r["n"] or "").strip().lower()
+        if name:
+            try:
+                out[name] = float(r["r"] or 0)
+            except (TypeError, ValueError):
+                out[name] = 0.0
+    return out
+
+
+def _pay_for(m: dict, row, rates: dict):
+    """What one row is worth, or None when nobody has set a rate.
+
+    None rather than 0.00, deliberately: "nothing set yet" and "worth nothing"
+    are different, and printing $0.00 at somebody would look like a decision
+    had been made."""
+    spec = m.get("pay_from")
+    if not spec or not rates:
+        return None
+    name = (row[spec["match"]] or "").strip().lower() if spec["match"] in row.keys() else ""
+    if name not in rates:
+        return None
+    try:
+        qty = float(row[m["sum_field"]] or 0)
+    except (TypeError, ValueError):
+        return None
+    return round(qty * rates[name], 2)
 
 
 def _split_archive(m, rows):
@@ -1680,9 +1740,13 @@ def records(key: str):
     rows = db.query("SELECT * FROM %s ORDER BY %s" % (m["table"], m["sort"]))
     rows, retired = _split_archive(m, rows)
     total = _sum(m) if m["sum_field"] else None
+    rates = _rates(m)
+    pay = {r["id"]: _pay_for(m, r, rates) for r in rows} if rates else {}
+    pay_total = sum(v for v in pay.values() if v is not None) if pay else None
     _mark_who(m)                 # so the page can offer a way into a profile
     return render_template("records.html", m=m, rows=rows, retired=retired,
                            total=total, cal=_cal_rows(m, rows),
+                           pay=pay, pay_total=pay_total, rates=rates,
                            suggest=_suggestions(m),
                            # a new record starts on today
                            today=date.today().isoformat(),

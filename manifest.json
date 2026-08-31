@@ -1,10 +1,10 @@
 {
-  "version": 78,
-  "published": "2026-08-31 15:56",
+  "version": 79,
+  "published": "2026-08-31 16:05",
   "files": {
     "app.py": {
-      "sha256": "fc337e75c1284099a91adc5529af3156c8889ca54f450e05c9cd832488855c2d",
-      "size": 68681
+      "sha256": "cf30c70c160ec8b95b2fd4ec5cbc7064da87723f93fd19be0873f234ddf97f62",
+      "size": 70924
     },
     "db.py": {
       "sha256": "6bd3c9ca520c8ece8a3a26acdc93f4d6c9bfcd500b5ec8f559ddbfaf4a96e0d1",
@@ -47,8 +47,8 @@
       "size": 10564
     },
     "templates/records.html": {
-      "sha256": "19a09a51d2a8dbdc4ea55d9330da05f12e38047d69f9641cd46a0236c656dad6",
-      "size": 29808
+      "sha256": "15794a5df5f8898f633e6c064d8197076a6ad8e84141fab31e16ed885142ef59",
+      "size": 32084
     },
     "templates/who.html": {
       "sha256": "b32df783e2a118c581a5e9a51fc88ea97efab05dcb5410fa5e22cd9fae2a18a4",
@@ -75,44 +75,44 @@
       "size": 8381
     },
     "static/style.css": {
-      "sha256": "a87d9a054199899bd6682b920b3cafe8c341ff30c4c477e45f4bdf1cf4db392a",
-      "size": 45339
+      "sha256": "e308bee78a7775627dde0de86c3493dcc5459c509f02875eca4024642531eb99",
+      "size": 46619
     }
   },
   "apps": {
     "jake_s_junkyard": {
-      "version": 11,
+      "version": 13,
       "files": {
         "modules.py": {
-          "sha256": "8e4bf0f62ee508cec7a87dc4ba366b8c0e3fd8ee1df3f481b4da175c534ff62d",
-          "size": 12224
+          "sha256": "9e00cb35f6d83118c49c76a742a0071f83a6fb5f86b7aa39f6e48ecc7a78762a",
+          "size": 12439
         }
       }
     },
     "2men_and_a_truck": {
-      "version": 7,
+      "version": 9,
       "files": {
         "modules.py": {
-          "sha256": "8ada4317360ec2253d4bfc460f2b62c9ee70fe91642f7ab579008ce8a58985bc",
-          "size": 14467
+          "sha256": "3f4503e91b46dc1a33314141f84ab18beb85e929e7ab27f7bad699b8df07e16f",
+          "size": 14725
         }
       }
     },
     "sarah_s_florist_shop": {
-      "version": 4,
+      "version": 6,
       "files": {
         "modules.py": {
-          "sha256": "ec36e5316eb08abea15c552f1cc56cb3b4707eafcccd9ab8f65d136a7c4b1a5e",
-          "size": 13384
+          "sha256": "6242e763c4a8017f4872a2226c5d910ff2c06071fddeda5a03dafcefd1fd571e",
+          "size": 13599
         }
       }
     },
     "new_app": {
-      "version": 3,
+      "version": 5,
       "files": {
         "modules.py": {
-          "sha256": "e622c9d413fa9bd8f785af21de0554011a36efc8e7ebd469572d28c208cd0c92",
-          "size": 10288
+          "sha256": "78752f523b43af02d37651f61eb9759ca98b9740423664ebd16d79543688bbab",
+          "size": 10516
         }
       }
     }
