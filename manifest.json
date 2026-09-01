@@ -1,6 +1,6 @@
 {
-  "version": 83,
-  "published": "2026-09-01 10:21",
+  "version": 84,
+  "published": "2026-09-01 10:25",
   "files": {
     "app.py": {
       "sha256": "04ad7fae94b663b13662379d1ac7ee3815c6eebf34bebad6e5dcbe9d8e066cb6",
@@ -43,8 +43,8 @@
       "size": 10230
     },
     "templates/dashboard.html": {
-      "sha256": "a3562e99cf8fbb4e135af82e31f1dc98a015915e0559ab2b3de767d5575c4969",
-      "size": 11495
+      "sha256": "6af83e4afc620fbf74b0e85139448829f67db7570f3dfd795846c4a77f8495e9",
+      "size": 12137
     },
     "templates/records.html": {
       "sha256": "d5108673506cc5b75040ee7f4849f4cdc099fe11a8414dc10e260b6741829f14",
@@ -84,34 +84,34 @@
       "version": 16,
       "files": {
         "modules.py": {
-          "sha256": "b78a3120885ce25e6354e627801075ca4cc47932aebcd107c58e6832cae87ccc",
+          "sha256": "95c83f049291dba6733ad4e4b4f25390f5ee2bc6866081cbce6b6fa113bab3a1",
           "size": 13633
         }
       }
     },
     "2men_and_a_truck": {
-      "version": 12,
+      "version": 13,
       "files": {
         "modules.py": {
-          "sha256": "529d7982d66873d26c56170ba77fe7960a938dd1315495cb9647e4c347f011e6",
+          "sha256": "7cd741e05986f449feca476a9dad6757f06c447efa54633592b1569358fa10a1",
           "size": 19913
         }
       }
     },
     "sarah_s_florist_shop": {
-      "version": 9,
+      "version": 10,
       "files": {
         "modules.py": {
-          "sha256": "c4c427f17c7885a12a908811844f4dc2eac50cc9034c3b70da6ac88f09d5fdc1",
-          "size": 15955
+          "sha256": "4e43ba70fe6af7d145f8f8c8210fc31460bab621123b3cd1c22faf0413edb690",
+          "size": 16338
         }
       }
     },
     "new_app": {
-      "version": 9,
+      "version": 10,
       "files": {
         "modules.py": {
-          "sha256": "3f504c54e9a895cbbc7fe54817c3c31902c98a778a7963d7dbbd74e28716e594",
+          "sha256": "bfcf361e17f4fd4984bffda2a79a97e2286be05b187d8bb86f53f0e4b3350711",
           "size": 11104
         }
       }
@@ -120,7 +120,7 @@
       "version": 2,
       "files": {
         "modules.py": {
-          "sha256": "011089a6260113fb591137a8449c0c80b7c4555a66ffc81f6da7c35a87797733",
+          "sha256": "ee7c96b29dc58075750c7ee7e8363bfb972117891249c3509122e7668908f2c8",
           "size": 17189
         }
       }

@@ -46,7 +46,7 @@ BUSINESS = {'name': "L's hair salon",
            'loud': '',
            'vars': {}},
  'initials': 'LS',
- 'generated': '2026-09-01 10:21'}
+ 'generated': '2026-09-01 10:25'}
 
 MODULES = [{'key': 'customers',
   'label': 'Clients',

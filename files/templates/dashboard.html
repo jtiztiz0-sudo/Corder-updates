@@ -136,7 +136,11 @@
           {% for t in today_rows %}
           <tr>
             <td class="w-tag"><span class="tag">{{ t['m'].icon }} {{ t['m'].label }}</span></td>
-            {% for f in t['m'].fields[:3] %}
+            {#- a TIME first when the tab has one: on a day's work, WHEN is
+               the thing you read before anything else -#}
+            {%- set ff = (t['m'].fields | selectattr('html', 'equalto', 'time') | list)
+                       + (t['m'].fields | rejectattr('html', 'equalto', 'time') | list) -%}
+            {% for f in ff[:3] %}
               {#- a date reads "4 Aug" here, like every other date on the page -#}
               <td>{{ (t['r'][f.name]|shortdate if f.type == 'date'
                       else t['r'][f.name]) if t['r'][f.name] is not none else '' }}</td>
@@ -156,7 +160,9 @@
           <tr>
             <td class="w-when">{{ t['when']|shortdate }}</td>
             <td class="w-tag"><span class="tag">{{ t['m'].icon }} {{ t['m'].label }}</span></td>
-            {% for f in t['m'].fields[:2] %}
+            {%- set ff = (t['m'].fields | selectattr('html', 'equalto', 'time') | list)
+                       + (t['m'].fields | rejectattr('html', 'equalto', 'time') | list) -%}
+            {% for f in ff[:2] %}
               {#- a date reads "4 Aug" here, like every other date on the page -#}
               <td>{{ (t['r'][f.name]|shortdate if f.type == 'date'
                       else t['r'][f.name]) if t['r'][f.name] is not none else '' }}</td>
@@ -181,7 +187,9 @@
           <tr>
             <td class="w-when">{{ t['when']|shortdate }}</td>
             <td class="w-tag"><span class="tag">{{ t['m'].icon }} {{ t['m'].label }}</span></td>
-            {% for f in t['m'].fields[:2] %}
+            {%- set ff = (t['m'].fields | selectattr('html', 'equalto', 'time') | list)
+                       + (t['m'].fields | rejectattr('html', 'equalto', 'time') | list) -%}
+            {% for f in ff[:2] %}
               {#- a date reads "4 Aug" here, like every other date on the page -#}
               <td>{{ (t['r'][f.name]|shortdate if f.type == 'date'
                       else t['r'][f.name]) if t['r'][f.name] is not none else '' }}</td>
