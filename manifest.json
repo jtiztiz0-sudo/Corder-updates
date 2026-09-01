@@ -1,10 +1,10 @@
 {
-  "version": 80,
-  "published": "2026-08-31 21:14",
+  "version": 81,
+  "published": "2026-08-31 21:47",
   "files": {
     "app.py": {
-      "sha256": "a4cd0b756a65b0b6bb21f2e4722065f035032abd7d8078f7ef34dacb64d9c4dc",
-      "size": 79424
+      "sha256": "cfbf308051c5b9628280aea00268e43f42f000544211b14aaa2859d25bf59c1a",
+      "size": 82289
     },
     "db.py": {
       "sha256": "6bd3c9ca520c8ece8a3a26acdc93f4d6c9bfcd500b5ec8f559ddbfaf4a96e0d1",
@@ -43,12 +43,12 @@
       "size": 9994
     },
     "templates/dashboard.html": {
-      "sha256": "85e5abf2b3ccdb8302df5770b7a1d2b425e0712dd2c87d1085e69f78b03608f1",
-      "size": 10564
+      "sha256": "e2d08d719117c1accc28e00d803049c16e62b8b66ecd8d4684f4271286413b32",
+      "size": 11230
     },
     "templates/records.html": {
-      "sha256": "e00bc0ed63b6e1ccaf5de7eb81102aa1f1a951b48a294a5858505282d045e903",
-      "size": 41027
+      "sha256": "70b564834fc8431716850a2e80b31d40207c044840dafc45ee31580cec3bf6f9",
+      "size": 41588
     },
     "templates/who.html": {
       "sha256": "b32df783e2a118c581a5e9a51fc88ea97efab05dcb5410fa5e22cd9fae2a18a4",
@@ -75,44 +75,44 @@
       "size": 8381
     },
     "static/style.css": {
-      "sha256": "33d3ee3106cc969dc42885cb219d43170fe66497cc2ec1342f88a27e5614212f",
-      "size": 48334
+      "sha256": "5e20d9072bd4edc34494843ee174a60687537d49c8a7b9ea3cf0d876e48a081b",
+      "size": 48831
     }
   },
   "apps": {
     "jake_s_junkyard": {
-      "version": 13,
+      "version": 14,
       "files": {
         "modules.py": {
-          "sha256": "cdd5742fc2e34f6a70b7acdf89ef355adf3e3c102a50761758e8f47e6a835d2f",
-          "size": 12439
+          "sha256": "6fc9541934d4b7b3722fae2737ea45893113e3ac7a19a3caed7b63a69348fda3",
+          "size": 13139
         }
       }
     },
     "2men_and_a_truck": {
-      "version": 9,
+      "version": 10,
       "files": {
         "modules.py": {
-          "sha256": "9771b134634632774c1667ff32941ea184408b992007ffcce973981e81e78fbc",
-          "size": 14725
+          "sha256": "b71803ee6319b97cc96b7f65805bc8ea69e21d7926ff9ac5b3383e7d6c11d933",
+          "size": 15593
         }
       }
     },
     "sarah_s_florist_shop": {
-      "version": 6,
+      "version": 7,
       "files": {
         "modules.py": {
-          "sha256": "d39ddf167bd8cd93de28a2c5e08e639cbb0375c6fef491799802131688c4a157",
-          "size": 13599
+          "sha256": "4470b0a2017fe3e26bb28329941640d5749fc3364b1d14cd2f82e5f18e14cbb4",
+          "size": 14327
         }
       }
     },
     "new_app": {
-      "version": 6,
+      "version": 7,
       "files": {
         "modules.py": {
-          "sha256": "5f186557b946df92b1d5e1e6e4455d79c1569c5a9e0566a1a3ecdde86945a4fa",
-          "size": 10516
+          "sha256": "ebcb5a6c6387f92564766f37d612133c06c458272d7687705db3b4d0aef8707d",
+          "size": 11020
         }
       }
     }

@@ -162,6 +162,9 @@
           {% endif %}
           <td class="num week-pay" data-rowpay>
             {%- if r.pay is not none %}${{ '%.2f'|format(r.pay) }}
+            {%- if r.low %} <span class="rate-warn"
+              title="${{ '%g'|format(r.rate) }} an hour looks like a typo — check their card">!</span>
+            {%- endif %}
             {%- else %}<span class="muted" title="No hourly rate on their card yet">&mdash;</span>{% endif -%}
           </td>
         </tr>
@@ -188,6 +191,13 @@
     {%- else %}No-one to put on the sheet yet. Add an entry below and they
     appear here; a Staff tab would give everybody a row and work out the pay.
     {%- endif %}</p>
+  {% endif %}
+  {% set odd = week.rows | selectattr('low') | list %}
+  {% if odd %}
+  <p class="week-warn">
+    {% for r in odd %}{{ r.name }} is down as ${{ '%g'|format(r.rate) }} an hour{{ ", " if not loop.last }}{% endfor %} &mdash;
+    that looks like a typo rather than a wage. The pay above is worked out
+    from it either way; change it on their card if it is wrong.</p>
   {% endif %}
   <p class="week-foot muted tiny">
     Anything over {{ '%g'|format(ot_after) }} hours in a week is overtime, paid

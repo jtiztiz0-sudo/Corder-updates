@@ -8,12 +8,25 @@
   {% for c in cards %}
   <a class="stat-card" href="{{ url_for('records', key=c['m'].key) }}">
     <div class="stat-icon">{{ c['m'].icon }}</div>
+    {#- When a tab totals something that is NOT money -- hours -- that total
+       is the number worth seeing, and the word underneath then describes it.
+       "2" under the word Hours reads as two hours when it is two records. -#}
+    {% if c['unit'] != 'money' and c['total'] is not none %}
+    <div class="stat-num">{{ '%g'|format(c['total']) }}</div>
+    <div class="stat-label">{{ c['m'].label }}</div>
+    {% if c['pay'] is not none %}
+      <div class="stat-sub">${{ '%.2f'|format(c['pay']) }}</div>
+    {% else %}
+      <div class="stat-sub">{{ c['count'] }} entr{{ 'y' if c['count'] == 1 else 'ies' }}</div>
+    {% endif %}
+    {% else %}
     <div class="stat-num">{{ c['count'] }}</div>
     <div class="stat-label">{{ c['m'].label }}</div>
     {% if c['total'] is not none %}
       <div class="stat-sub">${{ '%.2f'|format(c['total']) }}</div>
     {% elif c['m'].date_field %}
       <div class="stat-sub">{{ c['today'] }} today</div>
+    {% endif %}
     {% endif %}
   </a>
   {% endfor %}

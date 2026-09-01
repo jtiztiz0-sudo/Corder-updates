@@ -1469,6 +1469,11 @@ def _sum(m: dict) -> float:
     return (row["s"] or 0.0) if row else 0.0
 
 
+def low_rates(m: dict) -> dict:
+    """{name: rate} for anybody whose hourly rate looks like a typo."""
+    return {k: v for k, v in _rates(m).items() if 0 < v < LOW_RATE}
+
+
 def _rates(m: dict) -> dict:
     """{name: rate} off the tab that holds the rates.
 
@@ -1525,10 +1530,66 @@ def _pay_for(m: dict, row, rates: dict):
     return round(qty * rates[name], 2)
 
 
+def _pay_all(m: dict, rows=None) -> float | None:
+    """What a tab's rows are worth in total, with overtime where it is due.
+
+    Grouped by person and by WEEK, because that is the unit the overtime rule
+    is written in -- over 40 in a workweek. Adding a lifetime of hours up and
+    taking 1.5x off the top would be wrong in both directions.
+
+    None when nobody has a rate, so the page can leave it out rather than
+    print $0.00.
+    """
+    rates = _rates(m)
+    if not rates:
+        return None
+    spec = m["pay_from"]
+    if rows is None:
+        try:
+            rows = db.query("SELECT %s AS who, %s AS d, %s AS q FROM %s"
+                            % (spec["match"], m["date_field"], m["sum_field"],
+                               m["table"]))
+        except Exception:
+            return None
+    weeks = {}
+    for r in rows:
+        who = (r["who"] if "who" in r.keys() else r[spec["match"]]) or ""
+        who = who.strip().lower()
+        if who not in rates:
+            continue
+        raw = r["d"] if "d" in r.keys() else r[m["date_field"]]
+        try:
+            day = date.fromisoformat(str(raw or "")[:10])
+            wk = (day - timedelta(days=day.weekday())).isoformat()
+        except ValueError:
+            wk = ""                       # undated: its own bucket, no overtime
+        try:
+            qty = float((r["q"] if "q" in r.keys() else r[m["sum_field"]]) or 0)
+        except (TypeError, ValueError):
+            continue
+        weeks[(who, wk)] = weeks.get((who, wk), 0.0) + qty
+    total = 0.0
+    for (who, wk), hours in weeks.items():
+        rate = rates[who]
+        if wk:
+            reg = min(hours, OT_AFTER)
+            ot = max(0.0, hours - OT_AFTER)
+            total += reg * rate + ot * rate * OT_RATE
+        else:
+            total += hours * rate
+    return round(total, 2)
+
+
 # Over this many hours in one week is overtime, paid at OT_RATE. The federal
 # rule (FLSA): more than 40 in a workweek, at not less than time and a half.
 OT_AFTER = 40.0
 OT_RATE = 1.5
+
+# Below this an hourly rate is almost certainly a slip -- the federal minimum
+# is $7.25 and has been since 2009. Some states set a higher one, so this can
+# only mean "that looks too low to be a wage", never "that is against the
+# law", and it never stops anything being saved.
+LOW_RATE = 7.25
 
 
 def has_week(m: dict) -> bool:
@@ -1610,7 +1671,10 @@ def _week(m: dict, start_iso: str | None) -> dict | None:
         if pay:
             pay_total += pay
         rows.append({"name": name, "key": key, "cells": cells, "total": total,
-                     "reg": reg, "ot": ot, "rate": rate, "pay": pay})
+                     "reg": reg, "ot": ot, "rate": rate, "pay": pay,
+                     # looks like a typo rather than a wage -- flagged, never
+                     # refused
+                     "low": rate is not None and rate < LOW_RATE})
 
     return {"start": first, "end": last,
             # is the tab the names come from actually in this app? Without it
@@ -1771,6 +1835,10 @@ def dashboard():
             for r in rows:
                 today_rows.append({"m": m, "r": r})
         cards.append({"m": m, "count": count, "total": total, "today": due,
+                      # what the total is MEASURED in, and what it is worth.
+                      # A card has to say the same thing its tab says.
+                      "unit": m.get("sum_unit") or "money",
+                      "pay": _pay_all(m) if m.get("pay_from") else None,
         # the first box you would type into -- what the front-page quick-add
         # fills. Skips anything hidden, so it can never aim at a box that is
         # not on the form.
@@ -1865,7 +1933,9 @@ def records(key: str):
     rates = _rates(m)
     week = _week(m, request.args.get("w"))
     pay = {r["id"]: _pay_for(m, r, rates) for r in rows} if rates else {}
-    pay_total = sum(v for v in pay.values() if v is not None) if pay else None
+    # the same figure the front page shows: overtime applied per person per
+    # week, so the two can never disagree
+    pay_total = _pay_all(m) if m.get("pay_from") else None
     _mark_who(m)                 # so the page can offer a way into a profile
     return render_template("records.html", m=m, rows=rows, retired=retired,
                            total=total, cal=_cal_rows(m, rows),
