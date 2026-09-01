@@ -175,6 +175,38 @@ def _suggestions(m):
     return out
 
 
+def _file_customer(m: dict, values: dict) -> None:
+    """Put a name on the customers tab if it is not there already.
+
+    Called when a record NAMES a customer -- booking somebody in is how a
+    salon's client list actually gets written, not by typing the book out
+    first. Never raises: filing a name is a convenience, and it must not be
+    the thing that stops a booking being saved.
+    """
+    cust = modules.by_key("customers")
+    if cust is None or m["key"] == "customers":
+        return
+    field = next((f for f in m["fields"]
+                  if _is_customer_field(m, f) and not f.get("hidden")), None)
+    if field is None:
+        return
+    name = str(values.get(field["name"]) or "").strip()
+    if not name:
+        return
+    col = _name_field(cust)
+    if not col:
+        return
+    try:
+        seen = db.query("SELECT id FROM %s WHERE LOWER(TRIM(%s)) = LOWER(?)"
+                        % (cust["table"], col), (name,))
+        if seen:
+            return                      # already on file -- leave them alone
+        # the name and nothing else. Anything more would be invented.
+        db.insert(cust["table"], created_at=db.now(), **{col: name})
+    except Exception:
+        pass
+
+
 def _customer_links():
     """(module, field) for every live tab that names a customer."""
     out = []
@@ -194,6 +226,24 @@ def _is_customer_field(m, f):
                                             and f["name"] == "name")
 
 
+# Which choice on a status dropdown means "settled, nothing outstanding".
+# Matched by word rather than by position: a business can rename or reorder
+# its own choices, and guessing "the last one" would quietly count a Declined
+# quote as money owed.
+SETTLED_WORDS = ("paid", "done", "complete", "completed", "closed",
+                 "finished", "settled", "collected", "delivered", "accepted",
+                 "returned", "cancelled", "canceled", "declined", "lost",
+                 "void", "refunded")
+
+
+def _settled_values(m: dict) -> set:
+    """Every choice on this tab's status that means nothing is outstanding."""
+    field = next((f for f in m["fields"]
+                  if f["name"] == m.get("status_field")), None)
+    return {str(o).strip().lower() for o in (field or {}).get("options") or []
+            if str(o).strip().lower() in SETTLED_WORDS}
+
+
 @app.route("/who/<name>")
 def who(name: str):
     """Everything on this person, gathered from every tab that names them.
@@ -205,7 +255,9 @@ def who(name: str):
     want = (name or "").strip()
     if not want:
         abort(404)
-    card, groups, spent = None, [], 0.0
+    card, groups = None, []
+    spent = owed = 0.0
+    since, last = "", ""
     for m, f in _customer_links():
         rows = db.query(
             "SELECT * FROM %s WHERE LOWER(TRIM(%s)) = LOWER(TRIM(?)) "
@@ -214,17 +266,48 @@ def who(name: str):
             continue
         if m["key"] == "customers":
             card = rows[0]                      # their own details
+            since = str(card["created_at"] or "")[:10]
             continue
         groups.append({"m": m, "rows": rows})
+        # when they were last on the books -- their own date if the tab has
+        # one, otherwise when the record was written
+        df = m.get("date_field")
+        for r in rows:
+            # their own date if the tab has one AND it is filled in; otherwise
+            # when the record was written. A job with no date still happened.
+            when = ""
+            if df and df in r.keys():
+                when = str(r[df] or "")[:10]
+            if not when:
+                when = str(r["created_at"] or "")[:10]
+            if when:
+                last = max(last, when)
         sf = m.get("sum_field")
-        if sf:
-            for r in rows:
-                try:
-                    spent += float(r[sf] or 0)
-                except (TypeError, ValueError, IndexError):
-                    pass
+        if not sf:
+            continue
+        # what is finished, so what is NOT finished is what they owe
+        done = set()
+        arch = m.get("archive") or {}
+        if arch.get("done_value"):
+            done = {str(arch["done_value"]).strip().lower()}
+        elif m.get("status_field"):
+            done = _settled_values(m)
+        for r in rows:
+            try:
+                money = float(r[sf] or 0)
+            except (TypeError, ValueError, IndexError):
+                continue
+            spent += money
+            sfield = m.get("status_field")
+            if not sfield or not done:
+                continue
+            state = str((r[sfield] if sfield in r.keys() else "") or "").strip().lower()
+            if state and state not in done:
+                owed += money
     return render_template("who.html", name=want, card=card, groups=groups,
-                           spent=spent, cust=modules.by_key("customers"))
+                           spent=spent, owed=round(owed, 2),
+                           since=since, last=last,
+                           cust=modules.by_key("customers"))
 
 
 @app.template_filter("shortdate")
@@ -1234,6 +1317,21 @@ def _inject():
             "COPY_KIND": COPY_KIND}
 
 
+# Past this many columns a table stops fitting the 1280px reading width, so
+# the page takes the window instead. Measured against the real thing: eleven
+# columns needed a scrollbar, seven did not.
+WIDE_AT = 8
+
+
+def _wide_table(m: dict, has_pay: bool = False, has_owed: bool = False) -> bool:
+    """Does this tab have enough columns to need the whole window?"""
+    n = len([f for f in m["fields"] if not f.get("hidden")])
+    n += 1 if m.get("show_added") else 0
+    n += 1 if has_pay else 0
+    n += 1 if has_owed else 0
+    return n >= WIDE_AT
+
+
 def _module_or_404(key: str) -> dict:
     m = modules.by_key(key)
     if m is None:
@@ -1528,6 +1626,45 @@ def _pay_for(m: dict, row, rates: dict):
     except (TypeError, ValueError):
         return None
     return round(qty * rates[name], 2)
+
+
+def _owed_pair(m: dict):
+    """(total box, part-paid box) when this tab takes deposits AND both boxes
+    are actually switched on for this business -- otherwise nothing.
+
+    Both have to be live: a business that never turned the deposit on would
+    otherwise get a Still owed column that only ever repeats the price.
+    """
+    spec = m.get("owed_from")
+    if not spec:
+        return None
+    live = {f["name"] for f in m["fields"] if not f.get("hidden")}
+    if spec["total"] in live and spec["paid"] in live:
+        return spec["total"], spec["paid"]
+    return None
+
+
+def _still_owed(m: dict, row):
+    """What is left on one record, or None when there is nothing to work out.
+
+    None rather than 0.00 when no price has been put in: an empty booking is
+    not a paid one.
+    """
+    pair = _owed_pair(m)
+    if not pair:
+        return None
+    total_f, paid_f = pair
+    try:
+        total = float(row[total_f] or 0)
+    except (TypeError, ValueError, IndexError):
+        return None
+    if not total:
+        return None
+    try:
+        paid = float(row[paid_f] or 0)
+    except (TypeError, ValueError, IndexError):
+        paid = 0.0
+    return round(total - paid, 2)
 
 
 def _pay_all(m: dict, rows=None) -> float | None:
@@ -1932,6 +2069,8 @@ def records(key: str):
     total = _sum(m) if m["sum_field"] else None
     rates = _rates(m)
     week = _week(m, request.args.get("w"))
+    owed_pair = _owed_pair(m)
+    owed = {r["id"]: _still_owed(m, r) for r in rows} if owed_pair else {}
     pay = {r["id"]: _pay_for(m, r, rates) for r in rows} if rates else {}
     # the same figure the front page shows: overtime applied per person per
     # week, so the two can never disagree
@@ -1940,6 +2079,11 @@ def records(key: str):
     return render_template("records.html", m=m, rows=rows, retired=retired,
                            total=total, cal=_cal_rows(m, rows),
                            pay=pay, pay_total=pay_total, rates=rates,
+                           owed=owed, owed_pair=owed_pair,
+                           # a wide table gets the window rather than a
+                           # scrollbar inside a card with empty screen
+                           # either side of it
+                           roomy=_wide_table(m, bool(rates), bool(owed_pair)),
                            week=week, ot_after=OT_AFTER, ot_rate=OT_RATE,
                            # the grid's boxes step the same as the tab's own
                            week_step=next((f.get("step") or "0.25")
@@ -1967,6 +2111,7 @@ def record_add(key: str):
         if f["required"] and not str(values.get(f["name"]) or "").strip():
             return {"ok": False, "error": f["label"] + " is required"}, 400
     new_id = db.insert(m["table"], created_at=db.now(), **values)
+    _file_customer(m, values)
     if key == "wishlist":
         _send_wish(new_id, values)
     return {"ok": True, "id": new_id}

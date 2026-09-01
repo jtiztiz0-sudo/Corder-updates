@@ -370,6 +370,17 @@ button,.btn{border-radius:var(--radius-btn, var(--radius-sm))}
 .theme-btn:hover{background:var(--bg);color:var(--blue);border-color:var(--blue)}
 
 main{max-width:1280px;margin:0 auto;padding:22px}
+/* A table with a lot of columns gets the whole window rather than a
+   scrollbar inside a card with empty screen either side of it. */
+main.roomy{max-width:calc(100vw - 34px)}
+/* THE REASON THE SCROLLBAR WAS THERE. `white-space:nowrap` on a heading
+   means the column can never be narrower than the whole heading, so
+   "COLOUR FORMULA & NOTES" set a floor on its column and eleven of those
+   would not fit however wide the page was -- with an EMPTY table. Headings
+   wrap on a wide table, which drops each column to its longest word. Short
+   tables keep nowrap, where it reads better. */
+main.roomy .tbl th{white-space:normal;padding:9px 8px;line-height:1.25}
+main.roomy .tbl td{padding:3px 3px}
 /* size is set by the density rule below -- it scales with the text-size
    setting, so putting a fixed one here would just be overridden */
 h1{margin:0 0 4px;font-weight:750;letter-spacing:-.02em}
@@ -457,6 +468,12 @@ tr:hover .who-go{opacity:1;pointer-events:auto}
 .who-k{display:block;font-size:11px;text-transform:uppercase;
   letter-spacing:.07em;color:var(--muted);font-weight:700}
 .who-v{font-size:15px}
+.who-sum{display:flex;flex-wrap:wrap;gap:34px;align-items:flex-start}
+.who-fig{display:flex;flex-direction:column;gap:3px}
+/* outstanding is amber, never red: money still due is normal business, and
+   red here would make an ordinary unpaid invoice look like a fault */
+.who-total.owing{color:#d68a2e}
+.who-when{font-size:19px;font-weight:700}
 .who-total{font-size:22px;font-weight:800}
 .who-n{font-size:12px;color:var(--muted);font-weight:600;margin-left:6px}
 .add-card .fld label{font-size:11px;text-transform:uppercase;
@@ -550,6 +567,12 @@ tr:hover .who-go{opacity:1;pointer-events:auto}
   font-variant-numeric:tabular-nums;white-space:nowrap}
 .total-pay{margin-left:2px}
 .total-pay strong{color:var(--green)}
+/* what is left after a deposit. Amber while there is something to collect,
+   green once there is not -- money still due is ordinary business, so red
+   would read as a fault. */
+.owe-cell{font-weight:700;color:#d68a2e;
+  font-variant-numeric:tabular-nums;white-space:nowrap}
+.owe-clear{color:var(--green);font-weight:700}
 /* narrower now the date is short, and it must never break across lines */
 .w-added{width:86px}
 .ro-cell{color:var(--muted);font-size:13px;padding-left:9px;white-space:nowrap}

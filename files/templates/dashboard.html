@@ -22,8 +22,12 @@
     {% else %}
     <div class="stat-num">{{ c['count'] }}</div>
     <div class="stat-label">{{ c['m'].label }}</div>
+    {#- both, when a tab has both. On an appointments tab what is on TODAY is
+       the first thing you want, and the takings are the second -- there is no
+       reason to pick one. -#}
     {% if c['total'] is not none %}
-      <div class="stat-sub">${{ '%.2f'|format(c['total']) }}</div>
+      <div class="stat-sub">${{ '%.2f'|format(c['total']) }}{%
+        if c['m'].date_field %} &middot; {{ c['today'] }} today{% endif %}</div>
     {% elif c['m'].date_field %}
       <div class="stat-sub">{{ c['today'] }} today</div>
     {% endif %}

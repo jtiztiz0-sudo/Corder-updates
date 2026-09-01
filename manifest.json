@@ -1,10 +1,10 @@
 {
-  "version": 81,
-  "published": "2026-08-31 21:47",
+  "version": 83,
+  "published": "2026-09-01 10:21",
   "files": {
     "app.py": {
-      "sha256": "cfbf308051c5b9628280aea00268e43f42f000544211b14aaa2859d25bf59c1a",
-      "size": 82289
+      "sha256": "04ad7fae94b663b13662379d1ac7ee3815c6eebf34bebad6e5dcbe9d8e066cb6",
+      "size": 87958
     },
     "db.py": {
       "sha256": "6bd3c9ca520c8ece8a3a26acdc93f4d6c9bfcd500b5ec8f559ddbfaf4a96e0d1",
@@ -39,20 +39,20 @@
       "size": 3261
     },
     "templates/base.html": {
-      "sha256": "6e1ef33a781ef864a9b5ff1a43e3f486db31343b0e0827da4761ee6b3f70ba3c",
-      "size": 9994
+      "sha256": "7598158a10436f1d3980d38b2e6ba9e9375d0435ad1e796b31119ba596355b7e",
+      "size": 10230
     },
     "templates/dashboard.html": {
-      "sha256": "e2d08d719117c1accc28e00d803049c16e62b8b66ecd8d4684f4271286413b32",
-      "size": 11230
+      "sha256": "a3562e99cf8fbb4e135af82e31f1dc98a015915e0559ab2b3de767d5575c4969",
+      "size": 11495
     },
     "templates/records.html": {
-      "sha256": "70b564834fc8431716850a2e80b31d40207c044840dafc45ee31580cec3bf6f9",
-      "size": 41588
+      "sha256": "d5108673506cc5b75040ee7f4849f4cdc099fe11a8414dc10e260b6741829f14",
+      "size": 42584
     },
     "templates/who.html": {
-      "sha256": "b32df783e2a118c581a5e9a51fc88ea97efab05dcb5410fa5e22cd9fae2a18a4",
-      "size": 1628
+      "sha256": "1c3a5519eb2d2689be70048aa8f1ccf3ccf682b2f4615c4e32899d13e329457e",
+      "size": 2532
     },
     "templates/error.html": {
       "sha256": "60254c4587c3cb0ce4c8a8b2a8da865d852588ad8d6a9d5376c5915d6b4d2774",
@@ -75,44 +75,53 @@
       "size": 8381
     },
     "static/style.css": {
-      "sha256": "5e20d9072bd4edc34494843ee174a60687537d49c8a7b9ea3cf0d876e48a081b",
-      "size": 48831
+      "sha256": "c27e13be7482685f259a8d81d85b7c9ab73c502244e0f7297b1f9b8914ce35fa",
+      "size": 50201
     }
   },
   "apps": {
     "jake_s_junkyard": {
-      "version": 14,
+      "version": 16,
       "files": {
         "modules.py": {
-          "sha256": "6fc9541934d4b7b3722fae2737ea45893113e3ac7a19a3caed7b63a69348fda3",
-          "size": 13139
+          "sha256": "b78a3120885ce25e6354e627801075ca4cc47932aebcd107c58e6832cae87ccc",
+          "size": 13633
         }
       }
     },
     "2men_and_a_truck": {
-      "version": 10,
+      "version": 12,
       "files": {
         "modules.py": {
-          "sha256": "b71803ee6319b97cc96b7f65805bc8ea69e21d7926ff9ac5b3383e7d6c11d933",
-          "size": 15593
+          "sha256": "529d7982d66873d26c56170ba77fe7960a938dd1315495cb9647e4c347f011e6",
+          "size": 19913
         }
       }
     },
     "sarah_s_florist_shop": {
-      "version": 7,
+      "version": 9,
       "files": {
         "modules.py": {
-          "sha256": "4470b0a2017fe3e26bb28329941640d5749fc3364b1d14cd2f82e5f18e14cbb4",
-          "size": 14327
+          "sha256": "c4c427f17c7885a12a908811844f4dc2eac50cc9034c3b70da6ac88f09d5fdc1",
+          "size": 15955
         }
       }
     },
     "new_app": {
-      "version": 7,
+      "version": 9,
       "files": {
         "modules.py": {
-          "sha256": "ebcb5a6c6387f92564766f37d612133c06c458272d7687705db3b4d0aef8707d",
-          "size": 11020
+          "sha256": "3f504c54e9a895cbbc7fe54817c3c31902c98a778a7963d7dbbd74e28716e594",
+          "size": 11104
+        }
+      }
+    },
+    "l_s_hair_salon": {
+      "version": 2,
+      "files": {
+        "modules.py": {
+          "sha256": "011089a6260113fb591137a8449c0c80b7c4555a66ffc81f6da7c35a87797733",
+          "size": 17189
         }
       }
     }

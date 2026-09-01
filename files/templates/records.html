@@ -29,7 +29,15 @@
         the day it happened, and an empty box is a thing to fill in for no
         reason. Only on the add form -- filling in a date on a row that is
         already saved would be rewriting what happened. -#}
-    {%- set start = today if (is_add and f.html == 'date' and not value) else value -%}
+    {#- a new record starts with whatever the box is set to start with: a
+        date starts on today, and anything else with its own default. Seen in
+        the form BEFORE saving, so it can be typed over. -#}
+    {%- set start = value -%}
+    {%- if is_add and not value -%}
+      {%- if f.html == 'date' -%}{% set start = today %}
+      {%- elif f.default -%}{% set start = f.default %}
+      {%- endif -%}
+    {%- endif -%}
     <input type="{{ f.html }}" class="{{ cls }}" data-field="{{ f.name }}"
            {% if f.step %}step="{{ f.step }}"{% endif %}
            {% if sug %}list="{{ sug }}" autocomplete="off"{% endif %}
@@ -244,6 +252,7 @@
           <th {% if f.html == 'number' %}class="num"{% endif %}>{{ f.label }}</th>
           {%- endfor %}
           {%- if rates %}<th class="num w-pay">Pay</th>{% endif %}
+          {%- if owed_pair %}<th class="num w-pay">Still owed</th>{% endif %}
           {% if m.show_added %}<th class="w-added">Added</th>{% endif %}
           <th class="w-del"></th>
         </tr>
@@ -292,6 +301,17 @@
           {% endif %}
           {% endfor %}
           {# recorded by the app itself, so it's shown but never typed #}
+          {%- if owed_pair %}
+          {#- worked out, never typed: the price less whatever has been paid
+             up front. Blank until there is a price, because an empty booking
+             is not a settled one. -#}
+          <td class="num w-pay owe-cell">
+            {%- if owed.get(r['id']) is not none -%}
+            {%- if owed[r['id']] > 0 %}${{ '%.2f'|format(owed[r['id']]) }}
+            {%- else %}<span class="owe-clear">paid</span>{% endif -%}
+            {%- else -%}<span class="muted">&mdash;</span>{%- endif -%}
+          </td>
+          {%- endif %}
           {%- if rates %}
           {#- worked out, never typed: the rate lives on their card and this is
              hours x that. Blank when nobody has set one -- $0.00 would look

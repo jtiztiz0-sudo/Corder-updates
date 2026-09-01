@@ -18,10 +18,36 @@
 </div>
 {% endif %}
 
-{% if spent %}
-<div class="card who-card">
-  <span class="who-k">Spent with you</span>
-  <span class="who-total">${{ '%.2f'|format(spent) }}</span>
+{% if spent or owed or since or last %}
+{# What Jobber and Housecall Pro put at the top of a customer: what they have
+   been worth, and what is outstanding right now. The second is the reason to
+   open this while the phone is ringing. Both are worked out from the tabs
+   themselves, so there is no figure anywhere that can fall out of step. #}
+<div class="card who-sum">
+  {% if spent %}
+  <div class="who-fig">
+    <span class="who-k">Worth to you</span>
+    <span class="who-total">${{ '%.2f'|format(spent) }}</span>
+  </div>
+  {% endif %}
+  {% if owed %}
+  <div class="who-fig">
+    <span class="who-k">Outstanding</span>
+    <span class="who-total owing">${{ '%.2f'|format(owed) }}</span>
+  </div>
+  {% endif %}
+  {% if since %}
+  <div class="who-fig">
+    <span class="who-k">Customer since</span>
+    <span class="who-when">{{ since|shortdate }}</span>
+  </div>
+  {% endif %}
+  {% if last %}
+  <div class="who-fig">
+    <span class="who-k">Last on the books</span>
+    <span class="who-when">{{ last|shortdate }}</span>
+  </div>
+  {% endif %}
 </div>
 {% endif %}
 
