@@ -498,6 +498,44 @@ tr:hover .who-go{opacity:1;pointer-events:auto}
 /* translucent so the one value reads on both the light and the dark surface */
 .edit-tbl tr.flagged{background:rgba(224,160,58,.15)}
 .w-del{width:34px}
+
+/* THE WEEKLY TIMESHEET. Laid out like the paper one it replaces: names down
+   the side, days across, one number in each box. */
+.week-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  margin-bottom:12px}
+.week-hint{margin-left:auto}
+.week-tbl th,.week-tbl td{padding:7px 8px}
+.week-who{text-align:left;white-space:nowrap;font-weight:600;min-width:130px}
+.week-day{width:74px}
+.week-num{display:block;font-size:11px;font-weight:400;opacity:.55;
+  line-height:1.2}
+/* today is where you are most likely to be typing, so it is marked */
+.week-tbl th.is-today{color:var(--blue)}
+.week-tbl td.is-today{background:rgba(127,127,127,.06)}
+.week-in{width:100%;text-align:right;padding:6px 7px;
+  font-variant-numeric:tabular-nums;
+  /* the spinner arrows steal half the width of a box this narrow */
+  -moz-appearance:textfield;appearance:textfield}
+.week-in::-webkit-outer-spin-button,
+.week-in::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+/* a box that saved, and one that did not. Green flashes and goes; red stays,
+   because a number you think you typed and did not is the thing that costs
+   somebody money. */
+.week-in.saved{border-color:var(--green);
+  transition:border-color .25s ease}
+.week-in.bad{border-color:#d64545;background:rgba(214,69,69,.10)}
+.week-tot,.week-ot{width:82px;font-weight:700;
+  font-variant-numeric:tabular-nums}
+.week-ot{color:#d68a2e}
+.week-pay{width:104px;font-weight:700;color:var(--green);
+  font-variant-numeric:tabular-nums;white-space:nowrap}
+.week-tbl tfoot td{border-top:2px solid var(--line);font-weight:800;
+  background:var(--surface-2)}
+.week-foot{margin:10px 0 0}
+@media(max-width:820px){
+  .week-day{width:58px}
+  .week-who{min-width:96px}
+}
 /* Worked out, never typed. Held apart from the boxes you can edit so it reads
    as an answer rather than something you have to fill in. */
 .w-pay{width:96px}

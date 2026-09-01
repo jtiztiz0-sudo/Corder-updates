@@ -354,7 +354,9 @@ def _check_licence() -> None:
             with _u.urlopen(req, timeout=10, context=_ssl_ctx()) as r:
                 answer = json.loads(r.read(4000).decode("utf-8"))
         except Exception as exc:
-            diagnostics.log("licence", "", "could not check: %s" % exc)
+            # "offline", not an error: this check fails open by design, so
+            # the app is running normally and nothing needs looking at
+            diagnostics.log("offline", "licence check", str(exc))
             return                                        # rule 1
         if not answer.get("ok"):
             return
@@ -450,7 +452,8 @@ def _sync_fixed_requests() -> None:
             with _u.urlopen(req, timeout=10, context=_ssl_ctx()) as r:
                 ids = (json.loads(r.read(20000).decode("utf-8")) or {}).get("ids") or []
         except Exception as exc:
-            diagnostics.log("wish", "", "could not check fixed: %s" % exc)
+            diagnostics.log("offline", "checking what you have asked for",
+                            str(exc))
             return
         ids = [int(i) for i in ids if str(i).isdigit()][:500]
         if not ids:
@@ -470,7 +473,7 @@ def _sync_fixed_requests() -> None:
                           **{status: done,
                              stamp: datetime.now().strftime("%Y-%m-%d %H:%M")})
         except Exception as exc:
-            diagnostics.log("wish", "", "could not tick off: %s" % exc)
+            diagnostics.log("offline", "ticking off a request", str(exc))
 
     threading.Thread(target=go, daemon=True).start()
 
@@ -777,7 +780,7 @@ def connection_check():
         with _u.urlopen(req, timeout=12, context=_ssl_ctx()) as r:
             r.read(400)
     except Exception as exc:
-        diagnostics.log("connection", "", "check failed: %s" % exc)
+        diagnostics.log("offline", "the can-you-reach-JTS button", str(exc))
         return {"ok": True, "reachable": False, "waiting": waiting,
                 "error": str(exc)[:160]}
 
@@ -1454,7 +1457,9 @@ def _send_wish(row_id: int, values: dict) -> None:
             with _u.urlopen(req, timeout=10, context=_ssl_ctx()) as r:
                 r.read(200)
         except Exception as exc:                 # never surfaces to them
-            diagnostics.log("wish", "", "could not send: %s" % exc)
+            # it is kept here and goes on the next launch, so nothing is
+            # lost and there is nothing to act on
+            diagnostics.log("offline", "sending a request", str(exc))
 
     threading.Thread(target=go, daemon=True).start()
 
@@ -1487,11 +1492,17 @@ def _rates(m: dict) -> dict:
     out = {}
     for r in rows:
         name = (r["n"] or "").strip().lower()
-        if name:
-            try:
-                out[name] = float(r["r"] or 0)
-            except (TypeError, ValueError):
-                out[name] = 0.0
+        if not name:
+            continue
+        try:
+            rate = float(r["r"] or 0)
+        except (TypeError, ValueError):
+            continue
+        # A rate of nothing is NOT a rate of zero. Left out entirely, so the
+        # page can say "no rate set yet" with a dash instead of telling
+        # somebody their week is worth $0.00.
+        if rate > 0:
+            out[name] = rate
     return out
 
 
@@ -1512,6 +1523,117 @@ def _pay_for(m: dict, row, rates: dict):
     except (TypeError, ValueError):
         return None
     return round(qty * rates[name], 2)
+
+
+# Over this many hours in one week is overtime, paid at OT_RATE. The federal
+# rule (FLSA): more than 40 in a workweek, at not less than time and a half.
+OT_AFTER = 40.0
+OT_RATE = 1.5
+
+
+def has_week(m: dict) -> bool:
+    """A tab gets the weekly grid when it is people x days x a number --
+    which is what a timesheet is. Anything else keeps the plain list."""
+    return bool(m.get("pay_from") and m.get("date_field") and m.get("sum_field"))
+
+
+def _monday(iso: str | None):
+    """The Monday of the week containing `iso` (or today).
+
+    Monday because that is how every timesheet template lays a week out, and
+    because a week that starts on Sunday splits most people's working week in
+    the wrong place."""
+    try:
+        d = date.fromisoformat((iso or "")[:10])
+    except ValueError:
+        d = date.today()
+    return d - timedelta(days=d.weekday())
+
+
+def _week(m: dict, start_iso: str | None) -> dict | None:
+    """One week of the grid: the people down the side, the days across."""
+    if not has_week(m):
+        return None
+    spec = m["pay_from"]
+    start = _monday(start_iso)
+    days = [start + timedelta(days=i) for i in range(7)]
+    first, last = days[0].isoformat(), days[-1].isoformat()
+
+    # what has already been put in, this week
+    got = {}
+    try:
+        for r in db.query(
+                "SELECT %s AS who, %s AS d, %s AS q FROM %s "
+                "WHERE %s >= ? AND %s <= ?"
+                % (spec["match"], m["date_field"], m["sum_field"], m["table"],
+                   m["date_field"], m["date_field"]), (first, last)):
+            key = (r["who"] or "").strip().lower()
+            if key:
+                got.setdefault(key, {})
+                got[key][(r["d"] or "")[:10]] = (got[key].get((r["d"] or "")[:10]) or 0) + (r["q"] or 0)
+    except Exception:
+        got = {}
+
+    rates = _rates(m)
+    people = []
+    other = modules.by_key(spec["tab"])
+    if other is not None:
+        col = _name_field(other)
+        if col:
+            try:
+                people = [r[col] for r in db.query(
+                    "SELECT %s AS %s FROM %s ORDER BY %s COLLATE NOCASE"
+                    % (col, col, other["table"], col)) if (r[col] or "").strip()]
+            except Exception:
+                people = []
+    # anybody with hours this week but no card yet still gets a row -- they
+    # worked, and leaving them off the sheet would lose them
+    known = {(p or "").strip().lower() for p in people}
+    for key in got:
+        if key not in known:
+            people.append(key)
+
+    rows, col_totals, grand, pay_total = [], {d.isoformat(): 0.0 for d in days}, 0.0, 0.0
+    for name in people:
+        key = (name or "").strip().lower()
+        cells = {d.isoformat(): got.get(key, {}).get(d.isoformat()) for d in days}
+        total = round(sum(v for v in cells.values() if v), 4)
+        reg = min(total, OT_AFTER)
+        ot = round(max(0.0, total - OT_AFTER), 4)
+        rate = rates.get(key)
+        pay = None if rate is None else round(reg * rate + ot * rate * OT_RATE, 2)
+        for d in days:
+            v = cells[d.isoformat()]
+            if v:
+                col_totals[d.isoformat()] += v
+        grand += total
+        if pay:
+            pay_total += pay
+        rows.append({"name": name, "key": key, "cells": cells, "total": total,
+                     "reg": reg, "ot": ot, "rate": rate, "pay": pay})
+
+    return {"start": first, "end": last,
+            # is the tab the names come from actually in this app? Without it
+            # the sheet has no roster and no rates, and saying "add them on
+            # Staff" would point at a tab that is not there
+            "roster": other is not None,
+            "roster_label": other["label"] if other is not None else "",
+            "prev": (start - timedelta(days=7)).isoformat(),
+            "next": (start + timedelta(days=7)).isoformat(),
+            "this": _monday(None).isoformat(),
+            "days": [{"iso": d.isoformat(), "name": d.strftime("%a"),
+                      "num": d.day, "today": d == date.today()} for d in days],
+            "rows": rows, "col": col_totals,
+            "total": round(grand, 4), "pay": round(pay_total, 2),
+            "any_ot": any(r["ot"] for r in rows),
+            # "1 - 7 Sep", or "30 Aug - 5 Sep" when it straddles two months.
+            # Written the way somebody would say it out loud.
+            "label": ("%d - %d %s %d" % (days[0].day, days[-1].day,
+                                         days[-1].strftime("%b"), days[-1].year)
+                      if days[0].month == days[-1].month else
+                      "%d %s - %d %s %d" % (days[0].day, days[0].strftime("%b"),
+                                            days[-1].day, days[-1].strftime("%b"),
+                                            days[-1].year))}
 
 
 def _split_archive(m, rows):
@@ -1741,12 +1863,19 @@ def records(key: str):
     rows, retired = _split_archive(m, rows)
     total = _sum(m) if m["sum_field"] else None
     rates = _rates(m)
+    week = _week(m, request.args.get("w"))
     pay = {r["id"]: _pay_for(m, r, rates) for r in rows} if rates else {}
     pay_total = sum(v for v in pay.values() if v is not None) if pay else None
     _mark_who(m)                 # so the page can offer a way into a profile
     return render_template("records.html", m=m, rows=rows, retired=retired,
                            total=total, cal=_cal_rows(m, rows),
                            pay=pay, pay_total=pay_total, rates=rates,
+                           week=week, ot_after=OT_AFTER, ot_rate=OT_RATE,
+                           # the grid's boxes step the same as the tab's own
+                           week_step=next((f.get("step") or "0.25")
+                                          for f in m["fields"]
+                                          if f["name"] == m["sum_field"])
+                                     if m["sum_field"] else "0.25",
                            suggest=_suggestions(m),
                            # a new record starts on today
                            today=date.today().isoformat(),
@@ -1771,6 +1900,72 @@ def record_add(key: str):
     if key == "wishlist":
         _send_wish(new_id, values)
     return {"ok": True, "id": new_id}
+
+
+@app.route("/m/<key>/cell", methods=["POST"])
+def record_cell(key: str):
+    """One box of the weekly grid: this person, this day, this many hours.
+
+    Writes an ORDINARY row -- the same shape the list shows -- so the grid is
+    a way of typing, not a second kind of record. An empty box deletes the
+    day's entry rather than storing a zero, because "did not work" and
+    "worked no hours" should not look the same on a timesheet.
+
+    A person with more than one entry on the same day (two shifts typed in the
+    list) is NOT collapsed into one: the grid shows the sum, and typing over
+    it edits the FIRST and clears the rest, which is what "the day totals
+    this" means. Silently merging somebody's records would be worse.
+    """
+    m = _module_or_404(key)
+    if not has_week(m):
+        return {"ok": False, "error": "no timesheet on this tab"}, 400
+    p = request.get_json(silent=True) or {}
+    who = (p.get("who") or "").strip()
+    day = (p.get("date") or "").strip()[:10]
+    if not who:
+        return {"ok": False, "error": "who is required"}, 400
+    try:
+        date.fromisoformat(day)
+    except ValueError:
+        return {"ok": False, "error": "bad date"}, 400
+
+    raw = p.get("hours")
+    qty = None
+    if raw not in (None, "", "-"):
+        try:
+            qty = float(raw)
+        except (TypeError, ValueError):
+            return {"ok": False, "error": "hours must be a number"}, 400
+        if qty < 0:
+            return {"ok": False, "error": "hours cannot be negative"}, 400
+        step = 0.0
+        for f in m["fields"]:
+            if f["name"] == m["sum_field"]:
+                try:
+                    step = float(f.get("step") or 0)
+                except (TypeError, ValueError):
+                    step = 0
+        if step > 0:
+            qty = round(round(qty / step) * step, 6)
+
+    spec = m["pay_from"]
+    have = db.query(
+        "SELECT id FROM %s WHERE LOWER(TRIM(%s)) = ? AND %s = ? ORDER BY id"
+        % (m["table"], spec["match"], m["date_field"]), (who.lower(), day))
+
+    if qty in (None, 0.0) and not qty:
+        for r in have:                      # cleared: the day did not happen
+            db.delete(m["table"], r["id"])
+        return {"ok": True, "hours": None, "removed": len(have)}
+    if have:
+        db.update(m["table"], have[0]["id"], **{m["sum_field"]: qty})
+        for extra in have[1:]:              # the day now totals one figure
+            db.delete(m["table"], extra["id"])
+    else:
+        db.insert(m["table"], created_at=db.now(),
+                  **{spec["match"]: who, m["date_field"]: day,
+                     m["sum_field"]: qty})
+    return {"ok": True, "hours": qty}
 
 
 @app.route("/m/<key>/update", methods=["POST"])

@@ -64,7 +64,7 @@ BUSINESS = {'name': "Jackson's",
                     '--strip-bg': '#111312',
                     '--strip-ink': '#d8d8d8'}},
  'initials': 'JS',
- 'generated': '2026-08-31 16:05'}
+ 'generated': '2026-08-31 21:14'}
 
 MODULES = [{'key': 'staff',
   'label': 'Staff',

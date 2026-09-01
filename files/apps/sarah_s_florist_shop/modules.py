@@ -55,7 +55,7 @@ BUSINESS = {'name': "Sarah's Florist Shop",
                     '--radius': '3px',
                     '--radius-sm': '3px'}},
  'initials': 'SS',
- 'generated': '2026-08-31 16:05'}
+ 'generated': '2026-08-31 21:14'}
 
 MODULES = [{'key': 'jobs',
   'label': 'Orders',

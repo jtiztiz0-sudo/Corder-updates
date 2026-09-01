@@ -111,6 +111,91 @@
 </script>
 
 
+{% if week %}
+{# THE TIMESHEET. Every payroll tool worth using -- and every paper template
+   before them -- lays a week out this way: one row per person, one column per
+   day, one number in each box. You look at the week and type 8, 8, 8, 8, 4.
+
+   Each box is still an ordinary record underneath, so the list below shows
+   exactly the same hours and anything already typed keeps its notes. #}
+<div class="view-row">
+  <button type="button" class="view-btn" id="vWeek">&#128197; This week</button>
+  <button type="button" class="view-btn" id="vList2">&#9776; Every entry</button>
+</div>
+
+<div class="card week-card" id="weekCard">
+  <div class="week-head">
+    <a class="cal-nav" href="?w={{ week.prev }}" title="The week before">&lsaquo;</a>
+    <span class="cal-title">{{ week.label }}</span>
+    <a class="cal-nav" href="?w={{ week.next }}" title="The week after">&rsaquo;</a>
+    <a class="cal-today" href="?w={{ week.this }}">This week</a>
+    <span class="week-hint muted tiny">type the hours &mdash; it saves itself</span>
+  </div>
+  <div class="tbl-wrap">
+    <table class="tbl week-tbl">
+      <thead>
+        <tr>
+          <th class="week-who">Who</th>
+          {% for d in week.days %}
+          <th class="num week-day {{ 'is-today' if d.today }}">
+            {{ d.name }}<span class="week-num">{{ d.num }}</span></th>
+          {% endfor %}
+          <th class="num week-tot">Hours</th>
+          {% if week.any_ot %}<th class="num week-ot">Overtime</th>{% endif %}
+          <th class="num week-pay">Pay</th>
+        </tr>
+      </thead>
+      <tbody id="weekRows">
+        {% for r in week.rows %}
+        <tr data-who="{{ r.name }}" data-rate="{{ r.rate if r.rate is not none else '' }}">
+          <td class="week-who">{{ r.name }}</td>
+          {% for d in week.days %}
+          <td class="num week-day {{ 'is-today' if d.today }}">
+            <input type="number" class="week-in" step="{{ week_step }}" min="0"
+                   inputmode="decimal" data-who="{{ r.name }}" data-date="{{ d.iso }}"
+                   value="{{ '%g'|format(r.cells[d.iso]) if r.cells[d.iso] else '' }}">
+          </td>
+          {% endfor %}
+          <td class="num week-tot" data-rowtot>{{ '%g'|format(r.total) }}</td>
+          {% if week.any_ot %}
+          <td class="num week-ot" data-rowot>{{ '%g'|format(r.ot) if r.ot else '' }}</td>
+          {% endif %}
+          <td class="num week-pay" data-rowpay>
+            {%- if r.pay is not none %}${{ '%.2f'|format(r.pay) }}
+            {%- else %}<span class="muted" title="No hourly rate on their card yet">&mdash;</span>{% endif -%}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr>
+          <td class="week-who">Everyone</td>
+          {% for d in week.days %}
+          <td class="num week-day" data-coltot="{{ d.iso }}">
+            {{ '%g'|format(week.col[d.iso]) if week.col[d.iso] else '' }}</td>
+          {% endfor %}
+          <td class="num week-tot" id="weekTotal">{{ '%g'|format(week.total) }}</td>
+          {% if week.any_ot %}<td class="num week-ot"></td>{% endif %}
+          <td class="num week-pay" id="weekPay">${{ '%.2f'|format(week.pay) }}</td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+  {% if not week.rows %}
+  <p class="empty">
+    {%- if week.roster %}Nobody on {{ week.roster_label }} yet &mdash; add a
+    person there and they get a row of their own here, with their hourly rate.
+    {%- else %}No-one to put on the sheet yet. Add an entry below and they
+    appear here; a Staff tab would give everybody a row and work out the pay.
+    {%- endif %}</p>
+  {% endif %}
+  <p class="week-foot muted tiny">
+    Anything over {{ '%g'|format(ot_after) }} hours in a week is overtime, paid
+    at {{ '%g'|format(ot_rate) }}&times;. Leave a box empty for a day they did
+    not work.</p>
+</div>
+{% endif %}
+
 {% if cal is not none %}
 {# A dated tab gets a real month view. Built from the rows already on this
    page, so there is no second address to fetch and it works with no
@@ -744,5 +829,124 @@
     try { saved = localStorage.getItem(VIEW_KEY); } catch (e) {}
     setView(saved || (CAL_FIRST ? "cal" : "list"));
   }
+
+  {% if week %}
+  // ---- the weekly timesheet ----
+  (function () {
+    var card = document.getElementById("weekCard");
+    if (!card) return;
+    var listCard = document.getElementById("listCard");
+    var addCard = document.getElementById("addCard");
+    var vWeek = document.getElementById("vWeek");
+    var vList = document.getElementById("vList2");
+    var OT_AFTER = {{ ot_after|tojson }}, OT_RATE = {{ ot_rate|tojson }};
+    var DAYS = {{ (week.days | map(attribute='iso') | list)|tojson }};
+
+    function tidy(n) { return String(Math.round(n * 10000) / 10000); }
+
+    // Every total on the sheet, worked out from the boxes themselves -- so
+    // what you are looking at is always what you have typed, not what the
+    // page was built with.
+    function recount() {
+      var grand = 0, paid = 0, col = {};
+      DAYS.forEach(function (d) { col[d] = 0; });
+      card.querySelectorAll("#weekRows tr").forEach(function (tr) {
+        var total = 0;
+        tr.querySelectorAll(".week-in").forEach(function (el) {
+          var v = Number(el.value) || 0;
+          total += v;
+          if (col[el.dataset.date] !== undefined) col[el.dataset.date] += v;
+        });
+        var reg = Math.min(total, OT_AFTER);
+        var ot = Math.max(0, total - OT_AFTER);
+        var rate = tr.dataset.rate === "" ? null : Number(tr.dataset.rate);
+        tr.querySelector("[data-rowtot]").textContent = total ? tidy(total) : "0";
+        var otCell = tr.querySelector("[data-rowot]");
+        if (otCell) otCell.textContent = ot ? tidy(ot) : "";
+        var payCell = tr.querySelector("[data-rowpay]");
+        if (rate === null) {
+          // no rate on their card: a dash, never $0.00 -- that would read as
+          // a decision somebody had made about their wages
+          payCell.innerHTML = '<span class="muted">&mdash;</span>';
+        } else {
+          var pay = reg * rate + ot * rate * OT_RATE;
+          payCell.textContent = APP.money(pay);
+          paid += pay;
+        }
+        grand += total;
+      });
+      DAYS.forEach(function (d) {
+        var cell = card.querySelector('[data-coltot="' + d + '"]');
+        if (cell) cell.textContent = col[d] ? tidy(col[d]) : "";
+      });
+      document.getElementById("weekTotal").textContent = tidy(grand);
+      document.getElementById("weekPay").textContent = APP.money(paid);
+    }
+
+    function save(el) {
+      if (el.dataset.was === el.value) return;      // nothing actually changed
+      el.dataset.was = el.value;
+      el.classList.remove("bad");
+      APP.post("/m/" + KEY + "/cell", {
+        who: el.dataset.who, date: el.dataset.date, hours: el.value
+      }).then(function (d) {
+        if (!d || !d.ok) { el.classList.add("bad"); return; }
+        // it may have been snapped to the nearest quarter on the way in --
+        // show what was actually stored, not what was typed
+        el.value = (d.hours === null || d.hours === undefined) ? "" : tidy(d.hours);
+        el.dataset.was = el.value;
+        el.classList.add("saved");
+        setTimeout(function () { el.classList.remove("saved"); }, 700);
+        recount();
+      });
+    }
+
+    card.querySelectorAll(".week-in").forEach(function (el) {
+      el.dataset.was = el.value;
+      el.addEventListener("change", function () { save(el); });
+      el.addEventListener("blur", function () { save(el); });
+      el.addEventListener("input", recount);
+      el.addEventListener("keydown", function (e) {
+        if (e.key !== "Enter") return;
+        e.preventDefault();
+        save(el);
+        // Enter drops to the same day on the next person, which is how you
+        // fill a column in without touching the mouse
+        var here = tr_index(el), all = card.querySelectorAll(
+          '.week-in[data-date="' + el.dataset.date + '"]');
+        if (all[here + 1]) all[here + 1].focus();
+        else el.blur();
+      });
+    });
+
+    function tr_index(el) {
+      var all = card.querySelectorAll('.week-in[data-date="' + el.dataset.date + '"]');
+      for (var i = 0; i < all.length; i++) if (all[i] === el) return i;
+      return -1;
+    }
+
+    var WEEK_VIEW = "weekview:" + location.pathname;
+    function show(which) {
+      var onWeek = which === "week";
+      card.style.display = onWeek ? "block" : "none";
+      if (listCard) listCard.style.display = onWeek ? "none" : "block";
+      // the one-at-a-time add form belongs to the list; the grid IS the way
+      // you add on this view
+      if (addCard && onWeek) addCard.hidden = true;
+      var head = document.getElementById("addToggle");
+      if (head) head.style.display = onWeek ? "none" : "";
+      vWeek.classList.toggle("on", onWeek);
+      vList.classList.toggle("on", !onWeek);
+      try { localStorage.setItem(WEEK_VIEW, which); } catch (e) {}
+    }
+    vWeek.addEventListener("click", function () { show("week"); });
+    vList.addEventListener("click", function () { show("list"); });
+    var want = null;
+    try { want = localStorage.getItem(WEEK_VIEW); } catch (e) {}
+    // the sheet first: it is what this tab is FOR
+    show(want || "week");
+    recount();
+  })();
+  {% endif %}
 </script>
 {% endblock %}
