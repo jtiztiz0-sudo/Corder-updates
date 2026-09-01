@@ -1,6 +1,6 @@
 {
-  "version": 84,
-  "published": "2026-09-01 10:25",
+  "version": 85,
+  "published": "2026-09-01 16:41",
   "files": {
     "app.py": {
       "sha256": "04ad7fae94b663b13662379d1ac7ee3815c6eebf34bebad6e5dcbe9d8e066cb6",
@@ -84,7 +84,7 @@
       "version": 16,
       "files": {
         "modules.py": {
-          "sha256": "95c83f049291dba6733ad4e4b4f25390f5ee2bc6866081cbce6b6fa113bab3a1",
+          "sha256": "c56a329816c95a48178d88cbc555077cc17101c86aab4752aa1d32e480213d3a",
           "size": 13633
         }
       }
@@ -93,7 +93,7 @@
       "version": 13,
       "files": {
         "modules.py": {
-          "sha256": "7cd741e05986f449feca476a9dad6757f06c447efa54633592b1569358fa10a1",
+          "sha256": "5f3daef06673522bc26c0bdf1b92b5377311174ba0910f763a1d969808d53252",
           "size": 19913
         }
       }
@@ -102,16 +102,16 @@
       "version": 10,
       "files": {
         "modules.py": {
-          "sha256": "4e43ba70fe6af7d145f8f8c8210fc31460bab621123b3cd1c22faf0413edb690",
+          "sha256": "4b4b9a3907479b1976431844af7ea95033f12cc4a17d18a762bf3a030684abf1",
           "size": 16338
         }
       }
     },
     "new_app": {
-      "version": 10,
+      "version": 11,
       "files": {
         "modules.py": {
-          "sha256": "bfcf361e17f4fd4984bffda2a79a97e2286be05b187d8bb86f53f0e4b3350711",
+          "sha256": "dd08bbb2646309512eee5f181269ed643a4060452233e6a6509784074af0b23d",
           "size": 11104
         }
       }
@@ -120,8 +120,17 @@
       "version": 2,
       "files": {
         "modules.py": {
-          "sha256": "ee7c96b29dc58075750c7ee7e8363bfb972117891249c3509122e7668908f2c8",
+          "sha256": "795485718463f15824303509408cb7f0e1730767b328938ecd711b791a13cc4e",
           "size": 17189
+        }
+      }
+    },
+    "true_rate": {
+      "version": 1,
+      "files": {
+        "modules.py": {
+          "sha256": "b3d27d35b0a340c4c67bc4338b829b57cd06e478ed8d36e1fcc12dbd7d742a32",
+          "size": 19360
         }
       }
     }
