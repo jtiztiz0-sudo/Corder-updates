@@ -1,6 +1,6 @@
 {
-  "version": 85,
-  "published": "2026-09-01 16:41",
+  "version": 86,
+  "published": "2026-09-06 18:57",
   "files": {
     "app.py": {
       "sha256": "04ad7fae94b663b13662379d1ac7ee3815c6eebf34bebad6e5dcbe9d8e066cb6",
@@ -84,7 +84,7 @@
       "version": 16,
       "files": {
         "modules.py": {
-          "sha256": "c56a329816c95a48178d88cbc555077cc17101c86aab4752aa1d32e480213d3a",
+          "sha256": "08755e3098438457ae78f34e8ba7ea6f6f7cce37942b84c0ac06f5b2b799bf8b",
           "size": 13633
         }
       }
@@ -93,7 +93,7 @@
       "version": 13,
       "files": {
         "modules.py": {
-          "sha256": "5f3daef06673522bc26c0bdf1b92b5377311174ba0910f763a1d969808d53252",
+          "sha256": "24518f7bc9316cb50573f123327157d1180725b37a98aa64d7ed6d70ea652b51",
           "size": 19913
         }
       }
@@ -102,35 +102,35 @@
       "version": 10,
       "files": {
         "modules.py": {
-          "sha256": "4b4b9a3907479b1976431844af7ea95033f12cc4a17d18a762bf3a030684abf1",
+          "sha256": "5dd9ea8bab9a85c8e95fd0c72be9ea0d9d6267cef24f9365edd6bb7fc3a394ed",
           "size": 16338
         }
       }
     },
     "new_app": {
-      "version": 11,
+      "version": 12,
       "files": {
         "modules.py": {
-          "sha256": "dd08bbb2646309512eee5f181269ed643a4060452233e6a6509784074af0b23d",
+          "sha256": "9c19c7a04014f489f7617319cb7cc0f3aab9fa632ea444102be3937d44e6ce6a",
           "size": 11104
         }
       }
     },
     "l_s_hair_salon": {
-      "version": 2,
+      "version": 3,
       "files": {
         "modules.py": {
-          "sha256": "795485718463f15824303509408cb7f0e1730767b328938ecd711b791a13cc4e",
-          "size": 17189
+          "sha256": "76de2f984fc86418ed3fb89a6f896d1866527ba5789c84cbd2d15fd458dbf051",
+          "size": 14213
         }
       }
     },
     "true_rate": {
-      "version": 1,
+      "version": 2,
       "files": {
         "modules.py": {
-          "sha256": "b3d27d35b0a340c4c67bc4338b829b57cd06e478ed8d36e1fcc12dbd7d742a32",
-          "size": 19360
+          "sha256": "7bde81593d9ec8f2562c3204277325be39c4d108962e56d81f290eab1f6815f7",
+          "size": 9287
         }
       }
     }
